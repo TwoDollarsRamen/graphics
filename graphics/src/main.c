@@ -13,6 +13,7 @@ i32 main() {
 	glfwWindowHint(GLFW_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_SAMPLES, 8);
 
 	GLFWwindow* window = glfwCreateWindow(800, 600, "Graphics", null, null);
 	glfwMakeContextCurrent(window);
@@ -20,6 +21,8 @@ i32 main() {
 	glfwSwapInterval(0);
 
 	gladLoadGL();
+
+	glEnable(GL_MULTISAMPLE);
 
 	struct shader shader = { 0 };
 	init_shader_from_file(&shader, "res/basic.glsl");

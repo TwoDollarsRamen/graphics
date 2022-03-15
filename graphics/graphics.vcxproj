@@ -159,12 +159,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\loadobj.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\maths.c" />
     <ClCompile Include="src\video.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h" />
+    <ClInclude Include="src\loadobj.h" />
     <ClInclude Include="src\maths.h" />
     <ClInclude Include="src\video.h" />
   </ItemGroup>

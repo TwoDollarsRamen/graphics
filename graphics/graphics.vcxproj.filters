@@ -24,6 +24,9 @@
     <ClCompile Include="src\maths.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\loadobj.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h">
@@ -33,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\maths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\loadobj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
