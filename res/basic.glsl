@@ -1,5 +1,7 @@
 #begin VERTEX
 
+#version 450 core
+
 layout (location = 0) in vec3 position;
 
 void main() {
@@ -10,10 +12,12 @@ void main() {
 
 #begin FRAGMENT
 
+#version 450 core
+
 out vec4 color;
 
 void main() {
-	color = vec4(1.0);
+	color = vec4(0.0, 1.0, 0.0, 1.0);
 }
 
 #end FRAGMENT

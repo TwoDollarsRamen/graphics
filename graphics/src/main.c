@@ -61,38 +61,36 @@ i32 main() {
 	glfwTerminate();
 }
 
-bool read_raw(const char* filename, u8** buffer, u64* size, bool term) {
-	if (!*buffer) { return false; }
+bool read_raw(const char* filename, u8** buf, u64* size, bool term) {
+	if (!buf) { return false; }
+
+	*buf = null;
+	size ? *size = 0 : 0;
 
 	FILE* file = fopen(filename, "rb");
 	if (!file) {
-		fprintf(stderr, "Failed to `fopen' file `%s'\n", filename);
+		fprintf(stderr, "Failed to fopen file %s\n", filename);
 		return false;
 	}
 
 	fseek(file, 0, SEEK_END);
-	u64 fsize = ftell(file);
-	fseek(file, 0, SEEK_SET);
+	const u64 file_size = ftell(file);
+	rewind(file);
 
-	*buffer = malloc(fsize + term ? 1 : 0);
-
-	u64 read = fread(*buffer, 1, fsize, file);
-
-	if (size) {
-		*size = read + term ? 1 : 0;
-	}
-
-	if (read < fsize) {
-		fprintf(stderr, "`fread' of `%s' failed.\n", filename);
-		fclose(file);
-		return false;
+	*buf = malloc(file_size + (term ? 1 : 0));
+	const u64 bytes_read = fread(*buf, sizeof(char), file_size, file);
+	if (bytes_read < file_size) {
+		printf("Failed to read file: %s\n", filename);
 	}
 
 	if (term) {
-		(*buffer)[read] = '\0';
+		*((*buf) + file_size) = '\0';
+	}
+
+	if (size) {
+		*size = file_size + (term ? 1 : 0);
 	}
 
 	fclose(file);
 
-	return true;
 }
