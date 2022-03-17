@@ -5,6 +5,23 @@
 
 #include "common.h"
 
+/* This is a bare-bones dynamic array implementation. The user maintains a pointer
+ * to the first element of the vector; The implementation stores a `vector_header'
+ * struct behind that pointer. This way, the user can index into the vector using
+ * the default [] operator. Vectors must be initialised to a null pointer before
+ * they can be pushed to.
+ *
+ * Example:
+ *    vector(i32) ints = null;
+ *    vector_push(ints, 10);
+ *    vector_push(ints, 3);
+ *    vector_push(ints, 65);
+ *    for (u32 i = 0; i < vector_count(ints); i++) {
+ *        printf("%s\n", ints[i]);
+ *    }
+ *    free_vector(ints);
+ * */
+
 #define vector_default_capacity 8
 
 struct vector_header {
