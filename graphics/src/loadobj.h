@@ -2,19 +2,15 @@
 
 #include "common.h"
 #include "maths.h"
-
-struct obj_vertex {
-	v3f position;
-	v3f normal;
-	v2f uv;
-};
+#include "vector.h"
 
 struct obj_model {
-	struct obj_vertex* positions;
-	u32 position_count;
-
 	u32* indices;
 	u32 index_count;
+
+	bool has_uvs;
+	bool has_normals;
 };
 
-void load_obj(const char* filename, struct obj_model* model);
+bool load_obj(const char* filename, struct obj_model* model);
+void deinit_obj(struct obj_model* model);

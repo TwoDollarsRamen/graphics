@@ -5,6 +5,8 @@
 #include <glad/glad.h>
 
 #include "common.h"
+#include "loadobj.h"
+#include "vector.h"
 #include "video.h"
 
 i32 main() {
@@ -23,6 +25,9 @@ i32 main() {
 	gladLoadGL();
 
 	glEnable(GL_MULTISAMPLE);
+
+	struct obj_model model = { 0 };
+	load_obj("res/cube.obj", &model);
 
 	struct shader shader = { 0 };
 	init_shader_from_file(&shader, "res/basic.glsl");
@@ -58,6 +63,8 @@ i32 main() {
 
 	deinit_vb(&vb);
 	deinit_shader(&shader);
+
+	deinit_obj(&model);
 
 	glfwDestroyWindow(window);
 
@@ -97,3 +104,14 @@ bool read_raw(const char* filename, u8** buf, u64* size, bool term) {
 	fclose(file);
 
 }
+
+char* copy_string(const char* src) {
+	const u32 len = (u32)strlen(src);
+
+	char* s = malloc(len + 1);
+	memcpy(s, src, len);
+	s[len] = 0;
+
+	return s;
+}
+
