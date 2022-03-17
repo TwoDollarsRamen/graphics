@@ -55,10 +55,6 @@ static v2f parse_v2(const char* start) {
 	return r;
 }
 
-struct obj_vertex { /* Indexes into the position, normal and UV vectors. */
-	u32 position, uv, normal;
-};
-
 static struct obj_vertex parse_vertex(struct obj_model* model, const char* start) {
 	char* mod = copy_string(start);
 
@@ -124,11 +120,6 @@ bool load_obj(const char* filename, struct obj_model* model) {
 
 	char* line = malloc(4096);
 
-	vector(struct obj_vertex) verts = null;
-	vector(v3f) positions           = null;
-	vector(v2f) uvs                 = null;
-	vector(v3f) normals             = null;
-
 	while (fgets(line, 4096, file)) {
 		u32 line_len = (u32)strlen(line);
 
@@ -141,29 +132,24 @@ bool load_obj(const char* filename, struct obj_model* model) {
 			case 'v':
 				switch (line[1]) {
 					case 't':
-						vector_push(uvs,       parse_v2(line + 3));
+						vector_push(model->uvs, parse_v2(line + 3));
 						break;
 					case 'n':
-						vector_push(normals,   parse_v3(line + 3));
+						vector_push(model->normals, parse_v3(line + 3));
 						break;
 					case ' ':
 					case '\t':
-						vector_push(positions, parse_v3(line + 2));
+						vector_push(model->positions, parse_v3(line + 2));
 						break;
 					default: break;
 				}
 				break;
 			case 'f':
-				parse_face(model, &verts, line + 2);
+				parse_face(model, &model->vertices, line + 2);
 				break;
 			default: break;
 		}
 	}
-
-	free_vector(positions);
-	free_vector(uvs);
-	free_vector(normals);
-	free_vector(verts);
 
 	fclose(file);
 
@@ -173,7 +159,8 @@ bool load_obj(const char* filename, struct obj_model* model) {
 }
 
 void deinit_obj(struct obj_model* model) {
-	if (model->indices) {
-		free(model->indices);
-	}
+	free_vector(model->positions);
+	free_vector(model->uvs);
+	free_vector(model->normals);
+	free_vector(model->vertices);
 }

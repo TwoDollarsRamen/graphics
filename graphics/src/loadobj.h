@@ -4,12 +4,16 @@
 #include "maths.h"
 #include "vector.h"
 
-struct obj_model {
-	u32* indices;
-	u32 index_count;
+struct obj_vertex { /* Indexes into the position, normal and UV vectors. */
+	u32 position, uv, normal;
+};
 
-	bool has_uvs;
-	bool has_normals;
+struct obj_model {
+	vector(struct obj_vertex) vertices;
+
+	vector(v3f) positions;
+	vector(v2f) uvs;
+	vector(v3f) normals;
 };
 
 bool load_obj(const char* filename, struct obj_model* model);
