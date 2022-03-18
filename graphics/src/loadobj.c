@@ -83,6 +83,7 @@ static struct obj_vertex parse_vertex(struct obj_model* model, const char* start
 		}
 
 		*v = strtol(token, null, 10);
+		*v -= 1;
 
 		i++;
 	}

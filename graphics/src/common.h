@@ -5,6 +5,9 @@
 
 #define null ((void*)0x0)
 
+#define maximum(a_, b_) ((a_) > (b_) ? (a_) : (b_))
+#define minimum(a_, b_) ((a_) < (b_) ? (a_) : (b_))
+
 typedef int8_t   i8;
 typedef int16_t  i16;
 typedef int32_t  i32;

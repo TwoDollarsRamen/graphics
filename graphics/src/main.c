@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "loadobj.h"
+#include "mesh.h"
 #include "vector.h"
 #include "video.h"
 
@@ -29,6 +30,8 @@ i32 main() {
 	struct obj_model model = { 0 };
 	load_obj("res/cube.obj", &model);
 
+	struct mesh* cube = new_mesh_from_obj(&model);
+
 	struct shader shader = { 0 };
 	init_shader_from_file(&shader, "res/basic.glsl");
 
@@ -42,26 +45,19 @@ i32 main() {
 		0, 1, 2
 	};
 
-	struct vertex_buffer vb = { 0 };
-	init_vb(&vb, vb_static | vb_tris);
-	bind_vb_for_edit(&vb);
-	push_vertices(&vb, verts, 9);
-	push_indices(&vb, indices, 3);
-	configure_vb(&vb, 0, 3, 3, 0);
-
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		bind_shader(&shader);
-		bind_vb_for_draw(&vb);
-		draw_vb(&vb);
+		draw_mesh(cube);
 
 		glfwSwapBuffers(window);
 	}
 
-	deinit_vb(&vb);
+	free_mesh(cube);
+
 	deinit_shader(&shader);
 
 	deinit_obj(&model);
