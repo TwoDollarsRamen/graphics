@@ -14,6 +14,8 @@ struct obj_model {
 	vector(v3f) positions;
 	vector(v2f) uvs;
 	vector(v3f) normals;
+
+	bool triangulated;
 };
 
 bool load_obj(const char* filename, struct obj_model* model);

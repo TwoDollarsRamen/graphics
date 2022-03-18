@@ -18,7 +18,7 @@ i32 main() {
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_SAMPLES, 8);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "Graphics", null, null);
+	GLFWwindow* window = glfwCreateWindow(1366, 768, "Graphics", null, null);
 	glfwMakeContextCurrent(window);
 
 	glfwSwapInterval(0);
@@ -26,11 +26,12 @@ i32 main() {
 	gladLoadGL();
 
 	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_DEPTH_TEST);
 
 	struct obj_model model = { 0 };
-	load_obj("res/cube.obj", &model);
+	load_obj("res/monkey.obj", &model);
 
-	struct mesh* cube = new_mesh_from_obj(&model);
+	struct mesh* monkey = new_mesh_from_obj(&model);
 
 	struct shader shader = { 0 };
 	init_shader_from_file(&shader, "res/basic.glsl");
@@ -45,18 +46,39 @@ i32 main() {
 		0, 1, 2
 	};
 
+	f64 ts = 0.0f;
+	f64 now = glfwGetTime(), last = glfwGetTime();
+
+	f32 rotation = 0.0f;
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		bind_shader(&shader);
-		draw_mesh(cube);
+
+		m4f projection = m4f_pers(75.0f, 1366.0f / 768.0f, 0.0f, 100.0f);
+		shader_set_m4f(&shader, "projection", projection);
+
+		m4f view = m4f_translate(m4f_identity(), make_v3f(0.0f, 0.0f, -5.0f));
+		shader_set_m4f(&shader, "view", view);
+
+		m4f transform = m4f_rotate(m4f_identity(), rotation, make_v3f(0.0f, 1.0f, 0.0f));
+		shader_set_m4f(&shader, "transform", transform);
+
+		draw_mesh(monkey);
 
 		glfwSwapBuffers(window);
+
+		rotation += ts;
+
+		now = glfwGetTime();
+		ts = now - last;
+		last = now;
 	}
 
-	free_mesh(cube);
+	free_mesh(monkey);
 
 	deinit_shader(&shader);
 

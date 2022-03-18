@@ -40,7 +40,6 @@ struct mesh* new_mesh_from_obj(struct obj_model* model) {
 
 		if (new) {
 			u32 idx = (vertex_count) * els_per_vert;
-			vertex_count++;
 
 			verts[idx + 0] = pos.x;
 			verts[idx + 1] = pos.y;
@@ -52,14 +51,11 @@ struct mesh* new_mesh_from_obj(struct obj_model* model) {
 			verts[idx + 7] = norm.z;
 
 			indices[index_count++] = vertex_count;
+			vertex_count++;
 		}
 	}
 
-	for (u32 i = 0; i < index_count; i++) {
-		printf("%d\n", indices[i]);
-	}
-
-	init_vb(&mesh->vb, vb_static | vb_tris);
+	init_vb(&mesh->vb, vb_static | (model->triangulated ? vb_tris : vb_quads));
 	bind_vb_for_edit(&mesh->vb);
 	push_vertices(&mesh->vb, verts, vertex_count * els_per_vert);
 	push_indices(&mesh->vb, indices, index_count);

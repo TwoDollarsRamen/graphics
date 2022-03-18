@@ -101,10 +101,14 @@ static void parse_face(struct obj_model* model, vector(struct obj_vertex)* verts
 
 	u32 i = 0;
 
-	while ((token = strtok_r(save, " ", &save)) && i < 3) {
+	while ((token = strtok_r(save, " ", &save))) {
 		vector_push(*verts, parse_vertex(model, token));
 
 		i++;
+
+		if (i >= 4) {
+			model->triangulated = false;
+		}
 	}
 
 	free(mod);
@@ -112,6 +116,8 @@ static void parse_face(struct obj_model* model, vector(struct obj_vertex)* verts
 
 bool load_obj(const char* filename, struct obj_model* model) {
 	*model = (struct obj_model) { 0 };
+
+	model->triangulated = true;
 
 	FILE* file = fopen(filename, "rb");
 	if (!file) {

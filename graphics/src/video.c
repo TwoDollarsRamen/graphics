@@ -322,9 +322,10 @@ void draw_vb(const struct vertex_buffer* vb) {
 	u32 draw_type = GL_TRIANGLES;
 	if (vb->flags & vb_lines) {
 		draw_type = GL_LINES;
-	}
-	else if (vb->flags & vb_line_strip) {
+	} else if (vb->flags & vb_line_strip) {
 		draw_type = GL_LINE_STRIP;
+	} else if (vb->flags & vb_quads) {
+		draw_type = GL_QUADS;
 	}
 
 	glDrawElements(draw_type, vb->index_count, GL_UNSIGNED_INT, 0);
@@ -334,9 +335,10 @@ void draw_vb_n(const struct vertex_buffer* vb, u32 count) {
 	u32 draw_type = GL_TRIANGLES;
 	if (vb->flags & vb_lines) {
 		draw_type = GL_LINES;
-	}
-	else if (vb->flags & vb_line_strip) {
+	} else if (vb->flags & vb_line_strip) {
 		draw_type = GL_LINE_STRIP;
+	} else if (vb->flags & vb_quads) {
+		draw_type = GL_QUADS;
 	}
 
 	glDrawElements(draw_type, count, GL_UNSIGNED_INT, 0);
