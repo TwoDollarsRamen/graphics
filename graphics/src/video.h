@@ -5,7 +5,8 @@
 
 #define max_lights 100
 
-/* Basic renderer; Graphics abstraction. */
+/* OpenGL abstraction. I think it makes the rest of the
+ * program look more consistent. */
 
 void video_init();
 void video_clear();
@@ -66,10 +67,7 @@ struct texture {
 	u32 width, height;
 };
 
-void init_texture(struct texture* texture, u8* src, u64 size);
-void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip);
-void update_texture(struct texture* texture, u8* data, u64 size);
-void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip);
+void init_texture(struct texture* texture, const char* path);
 void deinit_texture(struct texture* texture);
 void bind_texture(const struct texture* texture, u32 unit);
 

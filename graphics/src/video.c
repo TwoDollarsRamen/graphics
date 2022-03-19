@@ -5,6 +5,9 @@
 
 #include <glad/glad.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "video.h"
 
 void video_init() {
@@ -22,19 +25,6 @@ void video_clear() {
 	glDisable(GL_SCISSOR_TEST);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
-
-#pragma pack(push, 1)
-struct bmp_header {
-	u16 ftype;
-	u32 fsize;
-	u16 res1, res2;
-	u32 bmp_offset;
-	u32 size;
-	i32 w, h;
-	u16 planes;
-	u16 bits_per_pixel;
-};
-#pragma pack(pop)
 
 void init_shader(struct shader* shader, const char* source, const char* name) {
 	shader->panic = false;
@@ -344,21 +334,15 @@ void draw_vb_n(const struct vertex_buffer* vb, u32 count) {
 	glDrawElements(draw_type, count, GL_UNSIGNED_INT, 0);
 }
 
-void init_texture(struct texture* texture, u8* data, u64 size) {
-	assert(size > sizeof(struct bmp_header));
+void init_texture(struct texture* texture, const char* path) {
+	i32 w, h, n;
+	u8* src = stbi_load(path, &w, &h, &n, 4);
 
-	if (*data != 'B' && *(data + 1) != 'M') {
-		fprintf(stderr, "Not a valid bitmap!\n");
+	if (!src) {
+		fprintf(stderr, "Failed to load texture: `%s': %s\n", path, stbi_failure_reason());
 		return;
 	}
 
-	struct bmp_header* header = (struct bmp_header*)data;
-	u8* src = data + header->bmp_offset;
-
-	init_texture_no_bmp(texture, src, header->w, header->h, true);
-}
-
-void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip) {
 	glGenTextures(1, &texture->id);
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 
@@ -367,82 +351,14 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool fl
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	struct color* colors = (struct color*)src;
-	struct color* dst = malloc(w * h * sizeof(struct color));
-	if (flip) {
-		for (u32 y = 0; y < h; y++) {
-			for (u32 x = 0; x < w; x++) {
-				dst[(h - y - 1) * w + x] = colors[y * w + x];
-			}
-		}
-	}
-	else {
-		memcpy(dst, src, w * h * sizeof(struct color));
-	}
-
-	for (u32 i = 0; i < w * h; i++) {
-		dst[i] = (struct color){ dst[i].b, dst[i].g, dst[i].r, dst[i].a };
-	}
-
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		w, h, 0, GL_RGBA,
-		GL_UNSIGNED_BYTE, dst);
+		GL_UNSIGNED_BYTE, src);
 
 	texture->width = w;
 	texture->height = h;
 
-	free(dst);
-}
-
-void update_texture(struct texture* texture, u8* data, u64 size) {
-	assert(size > sizeof(struct bmp_header));
-
-	if (*data != 'B' && *(data + 1) != 'M') {
-		fprintf(stderr, "Not a valid bitmap!\n");
-		return;
-	}
-
-	struct bmp_header* header = (struct bmp_header*)data;
-	u8* src = data + header->bmp_offset;
-
-	update_texture_no_bmp(texture, src, header->w, header->h, true);
-}
-
-void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip) {
-	glBindTexture(GL_TEXTURE_2D, texture->id);
-
-	struct color* colors = (struct color*)src;
-	struct color* dst = malloc(w * h * sizeof(struct color));
-	if (flip) {
-		for (u32 y = 0; y < h; y++) {
-			for (u32 x = 0; x < w; x++) {
-				dst[(h - y - 1) * w + x] = colors[y * w + x];
-			}
-		}
-	}
-	else {
-		memcpy(dst, src, w * h * sizeof(struct color));
-	}
-
-	for (u32 i = 0; i < w * h; i++) {
-		dst[i] = (struct color){ dst[i].b, dst[i].g, dst[i].r, dst[i].a };
-	}
-
-	texture->width = w;
-	texture->height = h;
-
-	if (texture->width == w && texture->height == h) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-			w, h, 0, GL_RGBA,
-			GL_UNSIGNED_BYTE, dst);
-	}
-	else {
-		glTexSubImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-			w, h, 0, GL_RGBA,
-			GL_UNSIGNED_BYTE, dst);
-	}
-
-	free(dst);
+	free(src);
 }
 
 void deinit_texture(struct texture* texture) {

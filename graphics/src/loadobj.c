@@ -113,21 +113,18 @@ static void parse_face(struct obj_mesh* mesh, vector(struct obj_vertex)* verts, 
 	free(mod);
 }
 
-
-bool load_obj(const char* filename, struct obj_model* model) {
-	*model = (struct obj_model) { 0 };
-
-	FILE* file = fopen(filename, "rb");
+static void parse_mtl(struct obj_model* model, const char* file_path, const char* mtl_path) {
+	FILE* file = fopen(mtl_path, "r");
 	if (!file) {
-		fprintf(stderr, "Failed to fopen `%s'\n", filename);
-		return false;
+		fprintf(stderr, "Failed to fopen `%s'\n", mtl_path);
+		return;
 	}
 
-	char* line = malloc(4096);
+	char* line = malloc(256);
 
-	struct obj_mesh* current_mesh = &model->root_mesh;
+	struct obj_material* cur = null;
 
-	while (fgets(line, 4096, file)) {
+	while (fgets(line, 256, file)) {
 		u32 line_len = (u32)strlen(line);
 
 		/* Strip the newline that fgets reads as well as the line. */
@@ -135,31 +132,87 @@ bool load_obj(const char* filename, struct obj_model* model) {
 			line[line_len - 1] = '\0';
 		}
 
-		switch (line[0]) {
-			case 'o':
-				vector_push(model->meshes, (struct obj_mesh) { 0 });
-				current_mesh = vector_end(model->meshes);
-				current_mesh->triangulated = true;
-				break;
-			case 'v':
-				switch (line[1]) {
-					case 't':
-						vector_push(model->uvs, parse_v2(line + 3));
-						break;
-					case 'n':
-						vector_push(model->normals, parse_v3(line + 3));
-						break;
-					case ' ':
-					case '\t':
-						vector_push(model->positions, parse_v3(line + 2));
-						break;
-					default: break;
-				}
-				break;
-			case 'f':
-				parse_face(current_mesh, &current_mesh->vertices, line + 2);
-				break;
-			default: break;
+		if (memcmp(line, "newmtl", 6) == 0) {
+			char* name = copy_string(line + 7);
+
+			cur = table_set(model->materials, name, &(struct obj_material) { 0 });
+
+			free(name);
+		} else if (memcmp(line, "map_Kd", 6) == 0) {
+			cur->diffuse_map_path = malloc(256);
+			strcpy(cur->diffuse_map_path, file_path);
+			strcat(cur->diffuse_map_path, line + 7);
+		}
+	}
+
+	free(line);
+}
+
+bool load_obj(const char* filename, struct obj_model* model) {
+	*model = (struct obj_model) { 0 };
+
+	FILE* file = fopen(filename, "r");
+	if (!file) {
+		fprintf(stderr, "Failed to fopen `%s'\n", filename);
+		return false;
+	}
+
+	model->materials = new_table(sizeof(struct obj_material));
+
+	char* file_path = get_file_path(filename);
+
+	char* line = malloc(256);
+
+	struct obj_mesh* current_mesh = &model->root_mesh;
+
+	while (fgets(line, 256, file)) {
+		u32 line_len = (u32)strlen(line);
+
+		/* Strip the newline that fgets reads as well as the line. */
+		if (line[line_len - 1] == '\n') {
+			line[line_len - 1] = '\0';
+		}
+
+		if (memcmp(line, "usemtl", 6) == 0) {
+			current_mesh->material_name = copy_string(line + 7);
+		} else if (memcmp(line, "mtllib", 6) == 0) {
+			char* mtl_name = copy_string(line + 7);
+			char* mtl_path = malloc(256);
+
+			strcpy(mtl_path, file_path);
+			strcat(mtl_path, mtl_name);
+			free(mtl_name);
+
+			parse_mtl(model, file_path, mtl_path);
+
+			free(mtl_path);
+		} else {
+			switch (line[0]) {
+				case 'o':
+					vector_push(model->meshes, (struct obj_mesh) { 0 });
+					current_mesh = vector_end(model->meshes);
+					current_mesh->triangulated = true;
+					break;
+				case 'v':
+					switch (line[1]) {
+						case 't':
+							vector_push(model->uvs, parse_v2(line + 3));
+							break;
+						case 'n':
+							vector_push(model->normals, parse_v3(line + 3));
+							break;
+						case ' ':
+						case '\t':
+							vector_push(model->positions, parse_v3(line + 2));
+							break;
+						default: break;
+					}
+					break;
+				case 'f':
+					parse_face(current_mesh, &current_mesh->vertices, line + 2);
+					break;
+				default: break;
+			}
 		}
 	}
 
@@ -168,6 +221,7 @@ bool load_obj(const char* filename, struct obj_model* model) {
 	fclose(file);
 
 	free(line);
+	free(file_path);
 
 	return true;
 }
@@ -184,4 +238,6 @@ void deinit_obj(struct obj_model* model) {
 	free_vector(model->normals);
 
 	free_vector(model->meshes);
+
+	free_table(model->materials);
 }

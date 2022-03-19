@@ -9,6 +9,7 @@
 #include "mesh.h"
 #include "vector.h"
 #include "video.h"
+#include "table.h"
 
 i32 main() {
 	glfwInit();
@@ -67,7 +68,7 @@ i32 main() {
 		m4f transform = m4f_rotate(m4f_identity(), rotation, make_v3f(0.0f, 1.0f, 0.0f));
 		shader_set_m4f(&shader, "transform", transform);
 
-		draw_model(monkey);
+		draw_model(monkey, &shader);
 
 		glfwSwapBuffers(window);
 
@@ -133,3 +134,43 @@ char* copy_string(const char* src) {
 	return s;
 }
 
+u64 elf_hash(const u8* data, u32 size) {
+	u64 hash = 0, x = 0;
+
+	for (u32 i = 0; i < size; i++) {
+		hash = (hash << 4) + data[i];
+		if ((x = hash & 0xF000000000LL) != 0) {
+			hash ^= (x >> 24);
+			hash &= ~x;
+		}
+	}
+
+	return (hash & 0x7FFFFFFFFF);
+}
+
+
+#ifdef _WIN32
+
+#include <windows.h>
+
+char* get_file_path(const char* name) {
+
+}
+
+#else
+
+char* get_file_path(const char* name) {
+	char* r = realpath(name, null);
+
+	u32 len = (u32)strlen(r);
+
+	char* cut = r + len;
+	while (cut > r && *cut != '/') {
+		*cut = '\0';
+		cut--;
+	}
+
+	return r;
+}
+
+#endif

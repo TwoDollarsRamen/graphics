@@ -22,3 +22,5 @@ typedef double f64;
 
 bool read_raw(const char* filename, u8** buf, u64* size, bool term);
 char* copy_string(const char* str);
+char* get_file_path(const char* name);
+u64 elf_hash(const u8* data, u32 size);

@@ -64,6 +64,19 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 
 	free(verts);
 	free(indices);
+
+	/* Material */
+	if (omesh->material_name) {
+		struct obj_material* material = table_get(omodel->materials, omesh->material_name);
+
+		if (material) {
+			if (material->diffuse_map_path) {
+				mesh->use_diffuse_map = true;
+
+				init_texture(&mesh->diffuse_map, material->diffuse_map_path);
+			}
+		}
+	}
 }
 
 struct model* new_model_from_obj(struct obj_model* omodel) {
@@ -96,8 +109,16 @@ void free_model(struct model* model) {
 	free(model);
 }
 
-void draw_model(struct model* model) {
+void draw_model(struct model* model, struct shader* shader) {
 	for (u32 i = 0; i < vector_count(model->meshes); i++) {
+		struct mesh* mesh = model->meshes + i;
+
+		shader_set_b(shader, "use_diffuse_map", mesh->use_diffuse_map);
+		if (mesh->use_diffuse_map) {
+			bind_texture(&model->meshes[i].diffuse_map, 0);
+			shader_set_i(shader, "diffuse_map", 0);
+		}
+
 		bind_vb_for_draw(&model->meshes[i].vb);
 		draw_vb(&model->meshes[i].vb);
 	}
