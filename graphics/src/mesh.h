@@ -7,7 +7,10 @@ struct mesh {
 	struct vertex_buffer vb;
 };
 
-struct mesh* new_mesh_from_obj(struct obj_model* model);
-void free_mesh(struct mesh* mesh);
+struct model {
+	vector(struct mesh) meshes;
+};
 
-void draw_mesh(struct mesh* mesh);
+struct model* new_model_from_obj(struct obj_model* model);
+void free_model(struct model* model);
+void draw_model(struct model* model);

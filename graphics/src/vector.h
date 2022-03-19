@@ -64,3 +64,6 @@ struct vector_header {
 #define vector_count(v_) ((v_) != null ? (((struct vector_header*)(v_)) - 1)->count : 0)
 
 #define free_vector(v_) if ((v_)) { free(((struct vector_header*)(v_)) - 1); }
+
+#define vector_start(v_) (v_)
+#define vector_end(v_) ((v_) != null ? ((v_) + ((((struct vector_header*)(v_)) - 1)->count - 1)) : null)

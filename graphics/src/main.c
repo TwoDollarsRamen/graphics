@@ -31,7 +31,7 @@ i32 main() {
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
 
-	struct mesh* monkey = new_mesh_from_obj(&model);
+	struct model* monkey = new_model_from_obj(&model);
 
 	struct shader shader = { 0 };
 	init_shader_from_file(&shader, "res/basic.glsl");
@@ -67,7 +67,7 @@ i32 main() {
 		m4f transform = m4f_rotate(m4f_identity(), rotation, make_v3f(0.0f, 1.0f, 0.0f));
 		shader_set_m4f(&shader, "transform", transform);
 
-		draw_mesh(monkey);
+		draw_model(monkey);
 
 		glfwSwapBuffers(window);
 
@@ -78,7 +78,7 @@ i32 main() {
 		last = now;
 	}
 
-	free_mesh(monkey);
+	free_model(monkey);
 
 	deinit_shader(&shader);
 

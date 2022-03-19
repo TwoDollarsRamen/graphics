@@ -8,15 +8,38 @@ struct obj_vertex { /* Indexes into the position, normal and UV vectors. */
 	u32 position, uv, normal;
 };
 
-struct obj_model {
+struct obj_material {
+	v3f ambient;
+	v3f diffuse;
+	v3f specular;
+	f32 specular_intensity;
+
+	char* diffuse_map_path;
+	char* specular_map_path;
+	char* bump_map_path;
+	char* displacement_map_path;
+	char* stencil_map_path;
+};
+
+struct obj_mesh {
 	vector(struct obj_vertex) vertices;
+
+	char* material_name;
+
+	bool triangulated;
+};
+
+struct obj_model {
+	bool has_root_mesh;
+	struct obj_mesh root_mesh;
 
 	vector(v3f) positions;
 	vector(v2f) uvs;
 	vector(v3f) normals;
 
-	bool triangulated;
+	vector(struct obj_mesh) meshes;
 };
 
 bool load_obj(const char* filename, struct obj_model* model);
 void deinit_obj(struct obj_model* model);
+struct obj_material obj_get_material(struct obj_model* model, const char* name);

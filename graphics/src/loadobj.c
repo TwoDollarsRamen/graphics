@@ -55,7 +55,7 @@ static v2f parse_v2(const char* start) {
 	return r;
 }
 
-static struct obj_vertex parse_vertex(struct obj_model* model, const char* start) {
+static struct obj_vertex parse_vertex(struct obj_mesh* mesh, const char* start) {
 	char* mod = copy_string(start);
 
 	struct obj_vertex r;
@@ -66,7 +66,6 @@ static struct obj_vertex parse_vertex(struct obj_model* model, const char* start
 	u32 i = 0;
 
 	while ((token = strtok_r(save, "/", &save)) && i < 3) {
-
 		u32* v = null;
 
 		switch (i) {
@@ -93,7 +92,7 @@ static struct obj_vertex parse_vertex(struct obj_model* model, const char* start
 	return r;
 }
 
-static void parse_face(struct obj_model* model, vector(struct obj_vertex)* verts, const char* start) {
+static void parse_face(struct obj_mesh* mesh, vector(struct obj_vertex)* verts, const char* start) {
 	char* mod = copy_string(start);
 
 	char* save = mod;
@@ -102,22 +101,21 @@ static void parse_face(struct obj_model* model, vector(struct obj_vertex)* verts
 	u32 i = 0;
 
 	while ((token = strtok_r(save, " ", &save))) {
-		vector_push(*verts, parse_vertex(model, token));
+		vector_push(*verts, parse_vertex(mesh, token));
 
 		i++;
 
 		if (i >= 4) {
-			model->triangulated = false;
+			mesh->triangulated = false;
 		}
 	}
 
 	free(mod);
 }
 
+
 bool load_obj(const char* filename, struct obj_model* model) {
 	*model = (struct obj_model) { 0 };
-
-	model->triangulated = true;
 
 	FILE* file = fopen(filename, "rb");
 	if (!file) {
@@ -126,6 +124,8 @@ bool load_obj(const char* filename, struct obj_model* model) {
 	}
 
 	char* line = malloc(4096);
+
+	struct obj_mesh* current_mesh = &model->root_mesh;
 
 	while (fgets(line, 4096, file)) {
 		u32 line_len = (u32)strlen(line);
@@ -136,6 +136,11 @@ bool load_obj(const char* filename, struct obj_model* model) {
 		}
 
 		switch (line[0]) {
+			case 'o':
+				vector_push(model->meshes, (struct obj_mesh) { 0 });
+				current_mesh = vector_end(model->meshes);
+				current_mesh->triangulated = true;
+				break;
 			case 'v':
 				switch (line[1]) {
 					case 't':
@@ -152,11 +157,13 @@ bool load_obj(const char* filename, struct obj_model* model) {
 				}
 				break;
 			case 'f':
-				parse_face(model, &model->vertices, line + 2);
+				parse_face(current_mesh, &current_mesh->vertices, line + 2);
 				break;
 			default: break;
 		}
 	}
+
+	model->has_root_mesh = vector_count(model->root_mesh.vertices) > 0;
 
 	fclose(file);
 
@@ -166,8 +173,15 @@ bool load_obj(const char* filename, struct obj_model* model) {
 }
 
 void deinit_obj(struct obj_model* model) {
+	for (u32 i = 0; i < vector_count(model->meshes); i++) {
+		struct obj_mesh* mesh = model->meshes + i;
+
+		free_vector(mesh->vertices);
+	}
+
 	free_vector(model->positions);
 	free_vector(model->uvs);
 	free_vector(model->normals);
-	free_vector(model->vertices);
+
+	free_vector(model->meshes);
 }
