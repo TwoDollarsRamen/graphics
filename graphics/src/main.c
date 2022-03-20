@@ -10,6 +10,7 @@
 #include "vector.h"
 #include "video.h"
 #include "table.h"
+#include "renderer.h"
 
 i32 main() {
 	glfwInit();
@@ -31,21 +32,51 @@ i32 main() {
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
-
 	struct model* monkey = new_model_from_obj(&model);
+	deinit_obj(&model);
 
-	struct shader shader = { 0 };
-	init_shader_from_file(&shader, "res/basic.glsl");
+	struct shader lit_shader = { 0 };
 
-	f32 verts[] = {
-		1.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f
-	};
+	struct shader_config shaders = { 0 };
+	init_shader_from_file(&shaders.lit, "res/lit.glsl");
 
-	u32 indices[] = {
-		0, 1, 2
-	};
+	struct renderer* renderer = new_renderer(shaders);
+	vector_push(renderer->drawlist, monkey);
+	vector_push(renderer->lights, ((struct light) {
+		.type = light_point,
+		.ambient = { 0 },
+		.specular = { 1.0f, 1.0f, 1.0f },
+		.diffuse = { 1.0f, 1.0f, 1.0f },
+		.intensity = 2.0f,
+		.as.point = {
+			.position = { 1.0f, 0.5f, 3.0f },
+			.range = 10.0f
+		}
+	}));
+
+	vector_push(renderer->lights, ((struct light) {
+		.type = light_point,
+		.ambient = { 0 },
+		.specular = { 1.0f, 1.0f, 1.0f },
+		.diffuse = { 1.0f, 0.0f, 1.0f },
+		.intensity = 1.0f,
+		.as.point = {
+			.position = { 0.0f, -3.0f, 0.0f },
+			.range = 10.0f
+		}
+	}));
+
+	vector_push(renderer->lights, ((struct light) {
+		.type = light_point,
+		.ambient = { 0 },
+		.specular = { 1.0f, 1.0f, 1.0f },
+		.diffuse = { 0.0f, 1.0f, 1.0f },
+		.intensity = 1.0f,
+		.as.point = {
+			.position = { 0.0f, 3.0f, 0.0f },
+			.range = 10.0f
+		}
+	}));
 
 	f64 ts = 0.0f;
 	f64 now = glfwGetTime(), last = glfwGetTime();
@@ -57,22 +88,13 @@ i32 main() {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		bind_shader(&shader);
+		monkey->transform = m4f_rotate(m4f_identity(), rotation, make_v3f(0.0f, 1.0f, 0.0f));
 
-		m4f projection = m4f_pers(75.0f, 1366.0f / 768.0f, 0.0f, 100.0f);
-		shader_set_m4f(&shader, "projection", projection);
-
-		m4f view = m4f_translate(m4f_identity(), make_v3f(0.0f, 0.0f, -5.0f));
-		shader_set_m4f(&shader, "view", view);
-
-		m4f transform = m4f_rotate(m4f_identity(), rotation, make_v3f(0.0f, 1.0f, 0.0f));
-		shader_set_m4f(&shader, "transform", transform);
-
-		draw_model(monkey, &shader);
-
-		glfwSwapBuffers(window);
+		renderer_draw(renderer);
 
 		rotation += ts;
+
+		glfwSwapBuffers(window);
 
 		now = glfwGetTime();
 		ts = now - last;
@@ -81,9 +103,9 @@ i32 main() {
 
 	free_model(monkey);
 
-	deinit_shader(&shader);
+	deinit_shader(&shaders.lit);
 
-	deinit_obj(&model);
+	free_renderer(renderer);
 
 	glfwDestroyWindow(window);
 

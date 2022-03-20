@@ -67,3 +67,8 @@ struct vector_header {
 
 #define vector_start(v_) (v_)
 #define vector_end(v_) ((v_) != null ? ((v_) + ((((struct vector_header*)(v_)) - 1)->count - 1)) : null)
+
+#define vector_iter(v_, n_) \
+	n_ = vector_start(v_); \
+	n_ <= vector_end(v_) && (v_); \
+	n_ = (void*)((u8*)n_ + ((v_) != null ? (((struct vector_header*)(v_)) - 1)->element_size : 0))

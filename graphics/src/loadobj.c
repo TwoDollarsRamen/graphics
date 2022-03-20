@@ -124,6 +124,13 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 
 	struct obj_material* cur = null;
 
+#define read_path(p_, o_) \
+	do { \
+		(p_) = malloc(256); \
+		strcpy((p_), file_path); \
+		strcat((p_), line + (o_)); \
+	} while (0)
+
 	while (fgets(line, 256, file)) {
 		u32 line_len = (u32)strlen(line);
 
@@ -138,14 +145,34 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 			cur = table_set(model->materials, name, &(struct obj_material) { 0 });
 
 			free(name);
-		} else if (memcmp(line, "map_Kd", 6) == 0) {
-			cur->diffuse_map_path = malloc(256);
-			strcpy(cur->diffuse_map_path, file_path);
-			strcat(cur->diffuse_map_path, line + 7);
+		} else if (cur && memcmp(line, "Ns", 2) == 0) { /* Specular exponent. */
+			parse_float(line + 3, &cur->specular_exponent);
+		} else if (cur && memcmp(line, "Ka", 2) == 0) { /* Ambient colour. */
+			cur->ambient = parse_v3(line + 3);
+		} else if (cur && memcmp(line, "Kd", 2) == 0) { /* Diffuse colour. */
+			cur->diffuse = parse_v3(line + 3);
+		} else if (cur && memcmp(line, "Ks", 2) == 0) { /* Specular colour. */
+			cur->specular = parse_v3(line + 3);
+		} else if (cur && memcmp(line, "map_Ka", 6) == 0) { /* Ambient map. */
+			read_path(cur->ambient_map_path, 7);
+		} else if (cur && memcmp(line, "map_Kd", 6) == 0) { /* Diffuse map. */
+			read_path(cur->diffuse_map_path, 7);
+		} else if (cur && memcmp(line, "map_Ks", 6) == 0) { /* Specular map. */
+			read_path(cur->specular_map_path, 7);
+		} else if (cur && memcmp(line, "map_bump", 8) == 0) { /* Bump map. */
+			read_path(cur->bump_map_path, 9);
+		} else if (cur && memcmp(line, "bump", 4) == 0) { /* Bump map. */
+			read_path(cur->bump_map_path, 5);
+		} else if (cur && memcmp(line, "disp", 4) == 0) { /* Displacement map. */
+			read_path(cur->displacement_map_path, 5);
+		} else if (cur && memcmp(line, "decal", 5) == 0) { /* Stencil map. */
+			read_path(cur->displacement_map_path, 6);
 		}
 	}
 
 	free(line);
+
+#undef read_path
 }
 
 bool load_obj(const char* filename, struct obj_model* model) {

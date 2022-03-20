@@ -70,10 +70,20 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 		struct obj_material* material = table_get(omodel->materials, omesh->material_name);
 
 		if (material) {
+			mesh->ambient = material->ambient;
+			mesh->diffuse = material->diffuse;
+			mesh->specular = material->specular;
+
 			if (material->diffuse_map_path) {
 				mesh->use_diffuse_map = true;
 
 				init_texture(&mesh->diffuse_map, material->diffuse_map_path);
+			}
+
+			if (material->specular_map_path) {
+				mesh->use_specular_map = true;
+
+				init_texture(&mesh->specular_map, material->specular_map_path);
 			}
 		}
 	}
@@ -118,6 +128,16 @@ void draw_model(struct model* model, struct shader* shader) {
 			bind_texture(&model->meshes[i].diffuse_map, 0);
 			shader_set_i(shader, "diffuse_map", 0);
 		}
+
+		shader_set_b(shader, "use_specular_map", mesh->use_specular_map);
+		if (mesh->use_specular_map) {
+			bind_texture(&model->meshes[i].specular_map, 1);
+			shader_set_i(shader, "specular_map", 1);
+		}
+
+		shader_set_v3f(shader, "material.ambient", mesh->ambient);
+		shader_set_v3f(shader, "material.diffuse", mesh->diffuse);
+		shader_set_v3f(shader, "material.specular",mesh->specular);
 
 		bind_vb_for_draw(&model->meshes[i].vb);
 		draw_vb(&model->meshes[i].vb);
