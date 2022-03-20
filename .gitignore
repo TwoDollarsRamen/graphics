@@ -11,6 +11,8 @@ project
 Session.vim
 Sessionx.vim
 
+premake5.exe
+
 # Temporary
 .netrwhist
 *~

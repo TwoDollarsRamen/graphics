@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string.h>
+
 #include "common.h"
 #include "maths.h"
 #include "vector.h"
@@ -7,7 +9,7 @@
 
 struct obj_vertex { /* Indexes into the position, normal and UV vectors. */
 	u32 position, uv, normal;
-};
+}; 
 
 struct obj_material {
 	v3f ambient;

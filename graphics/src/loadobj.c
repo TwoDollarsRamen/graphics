@@ -4,6 +4,12 @@
 
 #include "loadobj.h"
 
+#ifdef _WIN32
+/* Because Windows is weird and bad.
+ * strtok_r is standard everywhere else. */
+#define strtok_r strtok_s
+#endif
+
 struct obj_index {
 	u32 v, uv, n;
 };

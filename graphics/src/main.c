@@ -92,7 +92,7 @@ i32 main() {
 
 		renderer_draw(renderer);
 
-		rotation += ts;
+		rotation += (f32)ts;
 
 		glfwSwapBuffers(window);
 
@@ -144,6 +144,7 @@ bool read_raw(const char* filename, u8** buf, u64* size, bool term) {
 
 	fclose(file);
 
+	return true;
 }
 
 char* copy_string(const char* src) {
@@ -176,13 +177,29 @@ u64 elf_hash(const u8* data, u32 size) {
 #include <windows.h>
 
 char* get_file_path(const char* name) {
+	char* r = malloc(256);
 
+	if (!GetFullPathNameA(name, 256, r, null)) {
+		free(r);
+		return null;
+	}
+
+	u32 len = (u32)strlen(r);
+
+	char* cut = r + len;
+	while (cut > r && *cut != '\\') {
+		*cut = '\0';
+		cut--;
+	}
+
+	return r;
 }
 
 #else
 
 char* get_file_path(const char* name) {
 	char* r = realpath(name, null);
+	if (!r) { return null; }
 
 	u32 len = (u32)strlen(r);
 
