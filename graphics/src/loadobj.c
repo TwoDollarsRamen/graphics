@@ -264,6 +264,10 @@ void deinit_obj(struct obj_model* model) {
 		struct obj_mesh* mesh = model->meshes + i;
 
 		free_vector(mesh->vertices);
+
+		if (mesh->material_name) {
+			free(mesh->material_name);
+		}
 	}
 
 	free_vector(model->positions);
@@ -271,6 +275,17 @@ void deinit_obj(struct obj_model* model) {
 	free_vector(model->normals);
 
 	free_vector(model->meshes);
+
+	for (table_iter(model->materials, iter)) {
+		struct obj_material* m = iter.value;
+
+		if (m->ambient_map_path)      { free(m->ambient_map_path); }
+		if (m->diffuse_map_path)      { free(m->diffuse_map_path); }
+		if (m->specular_map_path)     { free(m->specular_map_path); }
+		if (m->bump_map_path)         { free(m->bump_map_path); }
+		if (m->displacement_map_path) { free(m->displacement_map_path); }
+		if (m->stencil_map_path)      { free(m->stencil_map_path); }
+	}
 
 	free_table(model->materials);
 }

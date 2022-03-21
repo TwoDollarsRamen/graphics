@@ -26,6 +26,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 		bind_shader(s);
 
+		/* TODO: Don't hardcode the screen size, that's stupid. */
 		shader_set_m4f(s, "projection", get_camera_proj(camera, make_v2i(1366, 768)));
 		shader_set_m4f(s, "view", get_camera_view(camera));
 
