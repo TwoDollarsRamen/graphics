@@ -73,6 +73,7 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 			mesh->ambient = material->ambient;
 			mesh->diffuse = material->diffuse;
 			mesh->specular = material->specular;
+			mesh->shininess = material->specular_exponent;
 
 			if (material->diffuse_map_path) {
 				mesh->use_diffuse_map = true;
@@ -91,6 +92,8 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 
 struct model* new_model_from_obj(struct obj_model* omodel) {
 	struct model* model = calloc(1, sizeof(struct model));
+
+	model->transform = m4f_identity();
 
 	if (omodel->has_root_mesh) {	
 		struct mesh mesh = { 0 };
@@ -135,9 +138,10 @@ void draw_model(struct model* model, struct shader* shader) {
 			shader_set_i(shader, "specular_map", 1);
 		}
 
-		shader_set_v3f(shader, "material.ambient", mesh->ambient);
-		shader_set_v3f(shader, "material.diffuse", mesh->diffuse);
-		shader_set_v3f(shader, "material.specular",mesh->specular);
+		shader_set_v3f(shader, "material.ambient",   mesh->ambient);
+		shader_set_v3f(shader, "material.diffuse",   mesh->diffuse);
+		shader_set_v3f(shader, "material.specular",  mesh->specular);
+		shader_set_f(  shader, "material.shininess", mesh->shininess);
 
 		bind_vb_for_draw(&model->meshes[i].vb);
 		draw_vb(&model->meshes[i].vb);

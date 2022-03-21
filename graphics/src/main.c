@@ -18,7 +18,6 @@ i32 main() {
 	glfwWindowHint(GLFW_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	glfwWindowHint(GLFW_SAMPLES, 8);
 
 	GLFWwindow* window = glfwCreateWindow(1366, 768, "Graphics", null, null);
 	glfwMakeContextCurrent(window);
@@ -27,8 +26,19 @@ i32 main() {
 
 	gladLoadGL();
 
-	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
+
+	struct camera camera = {
+		.speed = 5.0f,
+		.position = { 0.0f, 0.0f, 5.0f },
+		.front = { 0.0f, 0.0f, -1.0f },
+		.up = { 0.0f, 1.0f, 0.0f },
+		.first_mouse = true
+	};
+
+	glfwSetWindowUserPointer(window, &camera);
+	glfwSetCursorPosCallback(window, camera_look);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
@@ -78,21 +88,30 @@ i32 main() {
 		}
 	}));
 
+	vector_push(renderer->lights, ((struct light) {
+		.type = light_directional,
+			.ambient = { 0 },
+			.specular = { 1.0f, 1.0f, 1.0f },
+			.diffuse = { 1.0f, 1.0f, 1.0f },
+			.intensity = 1.0f,
+			.as.directional = {
+				.direction = { 0.5f, -1.0f, 0.0f },
+		}
+	}));
+
 	f64 ts = 0.0f;
 	f64 now = glfwGetTime(), last = glfwGetTime();
-
-	f32 rotation = 0.0f;
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		monkey->transform = m4f_rotate(m4f_identity(), rotation, make_v3f(0.0f, 1.0f, 0.0f));
+		monkey->transform = m4f_identity();
 
-		renderer_draw(renderer);
+		update_camera(window, &camera, ts);
 
-		rotation += (f32)ts;
+		renderer_draw(renderer, &camera);
 
 		glfwSwapBuffers(window);
 

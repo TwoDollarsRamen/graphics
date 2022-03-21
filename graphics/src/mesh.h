@@ -8,6 +8,7 @@ struct mesh {
 	struct vertex_buffer vb;
 
 	v3f ambient, diffuse, specular;
+	f32 shininess;
 
 	bool use_diffuse_map;
 	struct texture diffuse_map;
