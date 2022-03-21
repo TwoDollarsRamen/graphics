@@ -12,7 +12,7 @@ Session.vim
 Sessionx.vim
 
 premake5.exe
-
+*.bak
 # Temporary
 .netrwhist
 *~
