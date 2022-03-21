@@ -8,7 +8,7 @@ struct renderer* new_renderer(struct shader_config config) {
 
 	renderer->shaders = config;
 
-	renderer->ambient = make_v3f(0.0, 1.0, 1.0);
+	renderer->ambient = make_v3f(1.0, 1.0, 1.0);
 	renderer->ambient_intensity = 0.1f;
 
 	return renderer;

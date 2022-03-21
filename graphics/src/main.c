@@ -12,6 +12,62 @@
 #include "table.h"
 #include "renderer.h"
 
+void show_loading_screen(v2i screen_size) {
+	struct texture image;
+	struct shader shader;
+	glClearColor(0.0705882352941f, 0.0823529411765f, 0.262745098039f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	init_texture(&image, "res/textures/loading.png");
+	init_shader_from_file(&shader, "res/loading.glsl");
+
+	struct vertex_buffer vb;
+
+	u32 indices[] = {
+		0, 1, 3,
+		1, 2, 3 
+	};
+
+	f32 verts[] = {
+		 0.5f,  0.5f, 1.0f, 1.0f,
+		 0.5f, -0.5f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f, 1.0f
+	};
+
+	init_vb(&vb, vb_static | vb_tris);
+	bind_vb_for_edit(&vb);
+	push_vertices(&vb, verts, 16);
+	push_indices(&vb, indices, 6);
+	configure_vb(&vb, 0, 2, 4, 0); /* position (vec2) */
+	configure_vb(&vb, 1, 2, 4, 2); /* uv (vec2) */
+	bind_vb_for_edit(null);
+
+	bind_shader(&shader);
+	bind_texture(&image, 0);
+	shader_set_i(&shader, "t", 0);
+
+	shader_set_m4f(&shader, "camera", m4f_orth(0.0f, screen_size.x, screen_size.y, 0.0f, -1.0f, 1.0f));
+	shader_set_m4f(&shader, "transform",
+		m4f_mul(
+			m4f_translate(m4f_identity(), make_v3f(
+				((f32)screen_size.x / 2.0f),
+				((f32)screen_size.y / 2.0f), 0.0f
+			)),
+			m4f_scale(m4f_identity(), make_v3f(image.width, image.height, 0.0f))
+			)
+		);
+
+	bind_vb_for_draw(&vb);
+	draw_vb(&vb);
+
+	deinit_texture(&image);
+	deinit_shader(&shader);
+	deinit_vb(&vb);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+}
+
 i32 main() {
 	glfwInit();
 
@@ -25,6 +81,9 @@ i32 main() {
 	glfwSwapInterval(0);
 
 	gladLoadGL();
+
+	show_loading_screen(make_v2i(1366, 768));
+	glfwSwapBuffers(window);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -68,22 +127,10 @@ i32 main() {
 		.type = light_point,
 		.ambient = { 0 },
 		.specular = { 1.0f, 1.0f, 1.0f },
-		.diffuse = { 1.0f, 0.0f, 1.0f },
-		.intensity = 1.0f,
-		.as.point = {
-			.position = { 0.0f, -3.0f, 0.0f },
-			.range = 10.0f
-		}
-	}));
-
-	vector_push(renderer->lights, ((struct light) {
-		.type = light_point,
-		.ambient = { 0 },
-		.specular = { 1.0f, 1.0f, 1.0f },
 		.diffuse = { 0.0f, 1.0f, 1.0f },
 		.intensity = 1.0f,
 		.as.point = {
-			.position = { 0.0f, 3.0f, 0.0f },
+			.position = { 0.0f, 2.0f, -3.0f },
 			.range = 10.0f
 		}
 	}));
@@ -95,7 +142,7 @@ i32 main() {
 			.diffuse = { 1.0f, 1.0f, 1.0f },
 			.intensity = 1.0f,
 			.as.directional = {
-				.direction = { 0.5f, -1.0f, 0.0f },
+				.direction = { 0.0f, -1.0f, 0.0f },
 		}
 	}));
 

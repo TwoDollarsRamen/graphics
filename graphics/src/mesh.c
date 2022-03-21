@@ -15,6 +15,9 @@ static bool vertex_equal(v3f pos, v3f norm, v2f uv, float* verts) {
 }
 
 static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj_mesh* omesh) {
+	mesh->ambient = mesh->diffuse = mesh->specular = make_v3f(1.0f, 1.0f, 1.0f);
+	mesh->shininess = 32.0f;
+
 	f32* verts = malloc(vector_count(omesh->vertices) * els_per_vert * sizeof(f32));
 	u32* indices = malloc(vector_count(omesh->vertices) * sizeof(u32));
 
@@ -113,8 +116,10 @@ struct model* new_model_from_obj(struct obj_model* omodel) {
 }
 
 void free_model(struct model* model) {
-	for (u32 i = 0; i < vector_count(model->meshes); i++) {
-		deinit_vb(&model->meshes[i].vb);
+	for (struct mesh* vector_iter(model->meshes, mesh)) {
+		if (mesh->use_diffuse_map)  { deinit_texture(&mesh->diffuse_map); }
+		if (mesh->use_specular_map) { deinit_texture(&mesh->specular_map); }
+		deinit_vb(&mesh->vb);
 	}
 
 	free_vector(model->meshes);

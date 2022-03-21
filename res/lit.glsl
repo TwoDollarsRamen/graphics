@@ -105,13 +105,15 @@ vec3 compute_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 spec
 
 vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_dir, vec3 specular_map_color, vec3 diffuse_map_color) {
     vec3 light_dir = normalize(-light.direction);
+	vec3 halfway_dir = normalize(light_dir + view_dir);
+	
     float diff = max(dot(normal, light_dir), 0.0);
     vec3 diffuse = light.diffuse * diff * diffuse_map_color * light.intensity;
-   
+
     vec3 reflect_dir = reflect(light_dir, normal);
-    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
+	float spec = pow(max(dot(normal, halfway_dir), 0.0), material.shininess);
     vec3 specular = light.specular * spec * specular_map_color * light.intensity;
-        
+
     return diffuse + specular;
 }
 

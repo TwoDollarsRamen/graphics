@@ -14,7 +14,7 @@ map_Kd textures/containera.png
 map_Ks textures/containers.png
 
 newmtl Default_OBJ
-Ns 250.000000
+Ns 32.000000
 Ka 1.000000 1.000000 1.000000
 Kd 1.000000 1.000000 1.000000
 Ks 1.000000 1.000000 1.000000
