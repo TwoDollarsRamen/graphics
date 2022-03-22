@@ -23,7 +23,16 @@ void video_init() {
 
 void video_clear() {
 	glDisable(GL_SCISSOR_TEST);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void enable_cull_face() {
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+}
+
+void disable_cull_face() {
+	glDisable(GL_CULL_FACE);
 }
 
 void init_shader(struct shader* shader, const char* source, const char* name) {

@@ -19,7 +19,7 @@ void show_loading_screen(v2i screen_size) {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	init_texture(&image, "res/textures/loading.png");
-	init_shader_from_file(&shader, "res/loading.glsl");
+	init_shader_from_file(&shader, "res/shaders/loading.glsl");
 
 	struct vertex_buffer vb;
 
@@ -104,10 +104,10 @@ i32 main() {
 	struct shader crt_shader = { 0 };
 
 	struct shader_config shaders = { 0 };
-	init_shader_from_file(&shaders.lit, "res/lit.glsl");
-	init_shader_from_file(&invert_shader, "res/invert.glsl");
-	init_shader_from_file(&toon_shader, "res/toon.glsl");
-	init_shader_from_file(&crt_shader, "res/crt.glsl");
+	init_shader_from_file(&shaders.lit, "res/shaders/lit.glsl");
+	init_shader_from_file(&invert_shader, "res/shaders/invert.glsl");
+	init_shader_from_file(&toon_shader, "res/shaders/toon.glsl");
+	init_shader_from_file(&crt_shader, "res/shaders/crt.glsl");
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);

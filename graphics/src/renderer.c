@@ -50,6 +50,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		clear_render_target(&renderer->fb0);
 	}
 
+	enable_cull_face();
+
 	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
 		struct model* model = *model_ptr;
 
@@ -115,6 +117,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 		draw_model(model, s);
 	}
+	
+	disable_cull_face();
 
 	if (vector_count(renderer->postprocessors) > 0) {
 		struct render_target* last_target = &renderer->fb0;

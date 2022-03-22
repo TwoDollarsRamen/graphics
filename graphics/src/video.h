@@ -11,6 +11,9 @@
 void video_init();
 void video_clear();
 
+void enable_cull_face();
+void disable_cull_face();
+
 struct shader {
 	bool panic;
 
