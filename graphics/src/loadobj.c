@@ -104,17 +104,29 @@ static void parse_face(struct obj_mesh* mesh, vector(struct obj_vertex)* verts, 
 	char* save = mod;
 	char* token;
 
-	u32 i = 0;
+	/* This is rather stupid and slow. Fix. */
+
+	vector(char*) tokens = null;
 
 	while ((token = strtok_r(save, " ", &save))) {
-		vector_push(*verts, parse_vertex(mesh, token));
-
-		i++;
-
-		if (i >= 4) {
-			mesh->triangulated = false;
-		}
+		vector_push(tokens, copy_string(token));
 	}
+
+	vector_push(*verts, parse_vertex(mesh, tokens[0]));
+	vector_push(*verts, parse_vertex(mesh, tokens[1]));
+	vector_push(*verts, parse_vertex(mesh, tokens[2]));
+
+	if (vector_count(tokens) > 3) {
+		vector_push(*verts, parse_vertex(mesh, tokens[0]));
+		vector_push(*verts, parse_vertex(mesh, tokens[2]));
+		vector_push(*verts, parse_vertex(mesh, tokens[3]));
+	}
+
+	for (u32 i = 0; i < vector_count(tokens); i++) {
+		free(tokens[i]);
+	}
+
+	free_vector(tokens);
 
 	free(mod);
 }
@@ -224,7 +236,6 @@ bool load_obj(const char* filename, struct obj_model* model) {
 				case 'o':
 					vector_push(model->meshes, (struct obj_mesh) { 0 });
 					current_mesh = vector_end(model->meshes);
-					current_mesh->triangulated = true;
 					break;
 				case 'v':
 					switch (line[1]) {

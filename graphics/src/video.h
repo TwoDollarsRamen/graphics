@@ -36,8 +36,7 @@ enum {
 	vb_dynamic    = 1 << 1,
 	vb_lines      = 1 << 2,
 	vb_line_strip = 1 << 3,
-	vb_tris       = 1 << 4,
-	vb_quads      = 1 << 5
+	vb_tris       = 1 << 4
 };
 
 struct vertex_buffer {

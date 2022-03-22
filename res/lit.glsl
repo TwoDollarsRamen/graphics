@@ -17,7 +17,7 @@ out VS_OUT {
 } vs_out;
 
 void main() {
-	vs_out.normal = (transform * vec4(normal, 0.0)).xyz;
+	vs_out.normal = mat3(transpose(inverse(transform))) * normal;
 	vs_out.uv = uv;
 	vs_out.world_pos = vec3(transform * vec4(position, 1.0));
 
@@ -94,7 +94,7 @@ vec3 compute_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 spec
 
 vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_dir, vec3 specular_map_color, vec3 diffuse_map_color) {
 	vec3 light_dir = normalize(light.direction);
-    vec3 reflect_dir = reflect(light_dir, normal);
+    vec3 reflect_dir = reflect(-light_dir, normal);
 	
 	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0);
 	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);

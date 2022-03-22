@@ -29,8 +29,6 @@ struct obj_mesh {
 	vector(struct obj_vertex) vertices;
 
 	char* material_name;
-
-	bool triangulated;
 };
 
 struct obj_model {

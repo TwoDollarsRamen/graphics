@@ -56,7 +56,7 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 		}
 	}
 
-	init_vb(&mesh->vb, vb_static | (omesh->triangulated ? vb_tris : vb_quads));
+	init_vb(&mesh->vb, vb_static | vb_tris);
 	bind_vb_for_edit(&mesh->vb);
 	push_vertices(&mesh->vb, verts, vertex_count * els_per_vert);
 	push_indices(&mesh->vb, indices, index_count);

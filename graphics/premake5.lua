@@ -19,7 +19,7 @@ project "graphics"
 	}
 
 	files {
-		"src/**.c",
+		"src/**.h",
 		"src/**.c"
 	}
 
