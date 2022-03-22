@@ -82,8 +82,8 @@ i32 main() {
 
 	gladLoadGL();
 
-	show_loading_screen(make_v2i(1366, 768));
-	glfwSwapBuffers(window);
+	//show_loading_screen(make_v2i(1366, 768));
+	//glfwSwapBuffers(window);
 
 	glEnable(GL_DEPTH_TEST);
 

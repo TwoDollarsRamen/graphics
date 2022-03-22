@@ -243,7 +243,7 @@ bool load_obj(const char* filename, struct obj_model* model) {
 							vector_push(model->uvs, parse_v2(line + 3));
 							break;
 						case 'n':
-							vector_push(model->normals, parse_v3(line + 3));
+							vector_push(model->normals, v3f_normalised(parse_v3(line + 3)));
 							break;
 						case ' ':
 						case '\t':

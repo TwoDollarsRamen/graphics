@@ -86,8 +86,13 @@ vec3 compute_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 spec
 	vec3 light_dir = normalize(light.position - fs_in.world_pos);
     vec3 reflect_dir = reflect(-light_dir, normal);
 	
-	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0);
-	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
+	/* Attenuation from: https://geom.io/bakery/wiki/index.php?title=Point_Light_Attenuation
+	 *
+	 * The same attenuation model as Bakery uses. */
+	float a = 1.0 / (pow(length(light.position - fs_in.world_pos), 2.0) + 1);
+	
+	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0) * a;
+	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess) * a;
 
 	return diffuse + specular;
 }
