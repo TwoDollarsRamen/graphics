@@ -82,8 +82,8 @@ i32 main() {
 
 	gladLoadGL();
 
-	//show_loading_screen(make_v2i(1366, 768));
-	//glfwSwapBuffers(window);
+	show_loading_screen(make_v2i(screen_w, screen_h));
+	glfwSwapBuffers(window);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -99,17 +99,24 @@ i32 main() {
 	glfwSetCursorPosCallback(window, camera_look);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	struct shader invert_shader = { 0 };
+	struct shader toon_shader = { 0 };
+	struct shader crt_shader = { 0 };
+
+	struct shader_config shaders = { 0 };
+	init_shader_from_file(&shaders.lit, "res/lit.glsl");
+	init_shader_from_file(&invert_shader, "res/invert.glsl");
+	init_shader_from_file(&toon_shader, "res/toon.glsl");
+	init_shader_from_file(&crt_shader, "res/crt.glsl");
+
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
 	struct model* monkey = new_model_from_obj(&model);
 	deinit_obj(&model);
 
-	struct shader lit_shader = { 0 };
-
-	struct shader_config shaders = { 0 };
-	init_shader_from_file(&shaders.lit, "res/lit.glsl");
-
 	struct renderer* renderer = new_renderer(shaders);
+	vector_push(renderer->postprocessors, toon_shader);
+	vector_push(renderer->postprocessors, crt_shader);
 	vector_push(renderer->drawlist, monkey);
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
@@ -118,7 +125,7 @@ i32 main() {
 		.diffuse = { 1.0f, 0.0f, 0.0f },
 		.intensity = 1.0f,
 		.as.point = {
-			.position = { 1.0f, 0.5f, 3.0f },
+			.position = { 1.0f, 0.5f, 2.0f },
 			.range = 10.0f
 		}
 	}));
@@ -152,7 +159,7 @@ i32 main() {
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		clear_render_target(null);
 
 		update_camera(window, &camera, ts);
 
@@ -168,6 +175,9 @@ i32 main() {
 	free_model(monkey);
 
 	deinit_shader(&shaders.lit);
+	deinit_shader(&invert_shader);
+	deinit_shader(&toon_shader);
+	deinit_shader(&crt_shader);
 
 	free_renderer(renderer);
 

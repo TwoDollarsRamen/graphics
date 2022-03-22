@@ -378,7 +378,6 @@ void init_render_target(struct render_target* target, u32 width, u32 height) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, target->id);
 
-	/* Attach a texture */
 	glGenTextures(1, &target->output);
 	glBindTexture(GL_TEXTURE_2D, target->output);
 
@@ -388,10 +387,20 @@ void init_render_target(struct render_target* target, u32 width, u32 height) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	/* Allow multiple attachments? I don't think it's necessary for the time being;
-	 * A 2-D game won't need *that* much post-processing. */
+	
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target->output, 0);
+
+	glGenTextures(1, &target->depth);
+	glBindTexture(GL_TEXTURE_2D, target->depth);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, null);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, target->depth, 0);
 
 	target->width = width;
 	target->height = height;
@@ -406,6 +415,12 @@ void init_render_target(struct render_target* target, u32 width, u32 height) {
 void deinit_render_target(struct render_target* target) {
 	glDeleteFramebuffers(1, &target->id);
 	glDeleteTextures(1, &target->output);
+	glDeleteTextures(1, &target->depth);
+}
+
+void clear_render_target(struct render_target* target) {
+	bind_render_target(target);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void resize_render_target(struct render_target* target, u32 width, u32 height) {
@@ -416,6 +431,9 @@ void resize_render_target(struct render_target* target, u32 width, u32 height) {
 
 	glBindTexture(GL_TEXTURE_2D, target->output);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+
+	glBindTexture(GL_TEXTURE_2D, target->depth);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, null);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 

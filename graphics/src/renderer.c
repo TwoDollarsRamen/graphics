@@ -11,14 +11,45 @@ struct renderer* new_renderer(struct shader_config config) {
 	renderer->ambient = make_v3f(1.0, 1.0, 1.0);
 	renderer->ambient_intensity = 0.1f;
 
+	init_render_target(&renderer->fb0, screen_w, screen_h);
+	init_render_target(&renderer->fb1, screen_w, screen_h);
+
+	u32 indices[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	f32 verts[] = {
+		 1.0f,  1.0f, 1.0f, 1.0f,
+		 1.0f, -1.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f, 1.0f
+	};
+
+	init_vb(&renderer->fullscreen_quad, vb_static | vb_tris);
+	bind_vb_for_edit(&renderer->fullscreen_quad);
+	push_vertices(&renderer->fullscreen_quad, verts, 16);
+	push_indices(&renderer->fullscreen_quad, indices, 6);
+	configure_vb(&renderer->fullscreen_quad, 0, 2, 4, 0); /* position (vec2) */
+	configure_vb(&renderer->fullscreen_quad, 1, 2, 4, 2); /* uv (vec2) */
+	bind_vb_for_edit(null);
+
 	return renderer;
 }
 
 void free_renderer(struct renderer* renderer) {
+	deinit_render_target(&renderer->fb0);
+	deinit_render_target(&renderer->fb1);
+
 	free(renderer);
 }
 
 void renderer_draw(struct renderer* renderer, struct camera* camera) {
+	if (vector_count(renderer->postprocessors) > 0) {
+		bind_render_target(&renderer->fb0);
+		clear_render_target(&renderer->fb0);
+	}
+
 	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
 		struct model* model = *model_ptr;
 
@@ -26,8 +57,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 		bind_shader(s);
 
-		/* TODO: Don't hardcode the screen size, that's stupid. */
-		shader_set_m4f(s, "projection", get_camera_proj(camera, make_v2i(1366, 768)));
+		shader_set_m4f(s, "projection", get_camera_proj(camera, make_v2i(screen_w, screen_h)));
 		shader_set_m4f(s, "view", get_camera_view(camera));
 
 		shader_set_m4f(s, "transform", model->transform);
@@ -84,6 +114,38 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		shader_set_u(s, "directional_light_count", directional_count);
 
 		draw_model(model, s);
+	}
+
+	if (vector_count(renderer->postprocessors) > 0) {
+		struct render_target* last_target = &renderer->fb0;
+
+		for (u32 i = 0; i < vector_count(renderer->postprocessors); i++) {
+			struct shader* shader = renderer->postprocessors + i;
+
+			struct render_target* target;
+			if (i == vector_count(renderer->postprocessors) - 1) {
+				target = null;
+			} else if (i % 2 == 0) {
+				target = &renderer->fb1;
+			} else {
+				target = &renderer->fb0;
+			}
+
+			bind_render_target(target);
+			clear_render_target(target);
+
+			bind_shader(shader);
+
+			bind_render_target_output(last_target, 0);
+			shader_set_i(shader, "input_texture", 0);
+			shader_set_v2f(shader, "screen_size", make_v2f(screen_w, screen_h));
+
+			bind_vb_for_draw(&renderer->fullscreen_quad);
+			draw_vb(&renderer->fullscreen_quad);
+			bind_vb_for_draw(null);
+
+			last_target = target;
+		}
 	}
 }
 

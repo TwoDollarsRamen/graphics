@@ -75,8 +75,10 @@ struct render_target {
 	u32 width, height;
 
 	u32 output;
+	u32 depth;
 };
 
+void clear_render_target(struct render_target* target);
 void init_render_target(struct render_target* target, u32 width, u32 height);
 void deinit_render_target(struct render_target* target);
 void resize_render_target(struct render_target* target, u32 width, u32 height);
