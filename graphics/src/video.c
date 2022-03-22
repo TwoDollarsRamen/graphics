@@ -359,6 +359,8 @@ void init_texture(struct texture* texture, const char* path) {
 	texture->height = h;
 
 	free(src);
+
+	printf("Loaded texture `%s'.\n", path);
 }
 
 void deinit_texture(struct texture* texture) {

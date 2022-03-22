@@ -112,6 +112,8 @@ struct model* new_model_from_obj(struct obj_model* omodel) {
 		process_mesh(vector_end(model->meshes), omodel, omodel->meshes + i);
 	}
 
+	printf("Processed model.\n");
+
 	return model;
 }
 

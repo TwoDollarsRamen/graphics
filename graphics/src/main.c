@@ -114,9 +114,9 @@ i32 main() {
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
 		.ambient = { 0 },
-		.specular = { 1.0f, 1.0f, 1.0f },
-		.diffuse = { 1.0f, 1.0f, 1.0f },
-		.intensity = 2.0f,
+		.specular = { 1.0f, 0.0f, 0.0f },
+		.diffuse = { 1.0f, 0.0f, 0.0f },
+		.intensity = 1.0f,
 		.as.point = {
 			.position = { 1.0f, 0.5f, 3.0f },
 			.range = 10.0f
@@ -126,7 +126,7 @@ i32 main() {
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
 		.ambient = { 0 },
-		.specular = { 1.0f, 1.0f, 1.0f },
+		.specular = { 0.0f, 1.0f, 1.0f },
 		.diffuse = { 0.0f, 1.0f, 1.0f },
 		.intensity = 1.0f,
 		.as.point = {
@@ -140,9 +140,9 @@ i32 main() {
 			.ambient = { 0 },
 			.specular = { 1.0f, 1.0f, 1.0f },
 			.diffuse = { 1.0f, 1.0f, 1.0f },
-			.intensity = 1.0f,
+			.intensity = 0.5f,
 			.as.directional = {
-				.direction = { 0.0f, -1.0f, 0.0f },
+				.direction = { 0.0f, 1.0f, 0.0f },
 		}
 	}));
 
@@ -153,8 +153,6 @@ i32 main() {
 		glfwPollEvents();
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		monkey->transform = m4f_identity();
 
 		update_camera(window, &camera, ts);
 

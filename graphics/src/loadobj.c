@@ -249,6 +249,8 @@ bool load_obj(const char* filename, struct obj_model* model) {
 		}
 	}
 
+	printf("Loaded Wavefront model.\n");
+
 	model->has_root_mesh = vector_count(model->root_mesh.vertices) > 0;
 
 	fclose(file);

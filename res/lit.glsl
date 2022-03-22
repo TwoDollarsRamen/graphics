@@ -17,7 +17,7 @@ out VS_OUT {
 } vs_out;
 
 void main() {
-	vs_out.normal = mat3(transpose(inverse(transform))) * normal;
+	vs_out.normal = (transform * vec4(normal, 0.0)).xyz;
 	vs_out.uv = uv;
 	vs_out.world_pos = vec3(transform * vec4(position, 1.0));
 
@@ -84,37 +84,22 @@ uniform DirectionalLight directional_lights[max_directional_lights];
 
 vec3 compute_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 specular_map_color, vec3 diffuse_map_color) {
 	vec3 light_dir = normalize(light.position - fs_in.world_pos);
-	vec3 halfway_dir = normalize(light_dir + view_dir);
-
-	float diff = max(dot(normal, light_dir), 0.0);
-
-	vec3 reflect_dir = reflect(-light_dir, normal);
-	float spec = pow(max(dot(normal, halfway_dir), 0.0), material.shininess);
-
-	float dist = length(light.position - fs_in.world_pos);
-	float attenuation = 1.0 / (pow((dist / light.range) * 5.0, 2.0) + 1.0);
-
-	vec3 diffuse = light.diffuse * light.intensity * diff * diffuse_map_color * material.diffuse;
-	vec3 specular = light.specular * light.intensity * spec * specular_map_color * material.specular;
-
-	diffuse *= attenuation;
-	specular *= attenuation;
+    vec3 reflect_dir = reflect(-light_dir, normal);
+	
+	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0);
+	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 
 	return diffuse + specular;
 }
 
 vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_dir, vec3 specular_map_color, vec3 diffuse_map_color) {
-    vec3 light_dir = normalize(-light.direction);
-	vec3 halfway_dir = normalize(light_dir + view_dir);
-	
-    float diff = max(dot(normal, light_dir), 0.0);
-    vec3 diffuse = light.diffuse * diff * diffuse_map_color * light.intensity;
-
+	vec3 light_dir = normalize(light.direction);
     vec3 reflect_dir = reflect(light_dir, normal);
-	float spec = pow(max(dot(normal, halfway_dir), 0.0), material.shininess);
-    vec3 specular = light.specular * spec * specular_map_color * light.intensity;
+	
+	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0);
+	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 
-    return diffuse + specular;
+	return diffuse + specular;
 }
 
 void main() {
@@ -129,15 +114,17 @@ void main() {
 	}
 
 	vec3 view_dir = normalize(world.camera_pos - fs_in.world_pos);
+	
+	vec3 n = normalize(fs_in.normal);
 
 	vec3 lighting_result = diffuse_map_color.rgb * world.ambient_intensity * world.ambient * material.ambient;
 	for (uint i = 0; i < point_light_count; i++) {
-		lighting_result += compute_point_light(point_lights[i], fs_in.normal, view_dir,
+		lighting_result += compute_point_light(point_lights[i], n, view_dir,
 			specular_map_color.rgb, diffuse_map_color.rgb);
 	}
 	
 	for (uint i = 0; i < directional_light_count; i++) {
-		lighting_result += compute_directional_light(directional_lights[i], fs_in.normal, view_dir,
+		lighting_result += compute_directional_light(directional_lights[i], n, view_dir,
 			specular_map_color.rgb, diffuse_map_color.rgb);
 	}
 
