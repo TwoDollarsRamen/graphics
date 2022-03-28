@@ -160,6 +160,7 @@ i32 main() {
 			.intensity = 0.5f,
 			.as.directional = {
 				.direction = { 0.3f, 1.0f, 0.3f },
+				.cast_shadows = true
 		}
 	}));
 

@@ -470,3 +470,54 @@ void bind_render_target_output(struct render_target* target, u32 unit) {
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, target->output);
 }
+
+void init_depth_map(struct depth_map* dm, u32 width, u32 height) {
+	glGenFramebuffers(1, &dm->id);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, dm->id);
+
+	glGenTextures(1, &dm->output);
+	glBindTexture(GL_TEXTURE_2D, dm->output);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dm->output, 0);
+
+	dm->width = width;
+	dm->height = height;
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		fprintf(stderr, "Failed to create depth map.\n");
+	}
+
+	bind_depth_map(null);
+}
+
+void deinit_depth_map(struct depth_map* dm) {
+	glDeleteFramebuffers(1, &dm->id);
+	glDeleteTextures(1, &dm->output);
+}
+
+void bind_depth_map(struct depth_map* dm) {
+	if (!dm) { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+}
+
+void clear_depth_map(struct depth_map* dm) {
+	bind_depth_map(dm);
+	glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void bind_depth_map_output(struct depth_map* dm, u32 unit) {
+	if (!dm) {
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return;
+	}
+
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glBindTexture(GL_TEXTURE_2D, dm->output);
+}

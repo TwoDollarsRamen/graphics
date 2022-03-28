@@ -17,7 +17,7 @@
  *    vector_push(ints, 3);
  *    vector_push(ints, 65);
  *    for (u32 i = 0; i < vector_count(ints); i++) {
- *        printf("%s\n", ints[i]);
+ *        printf("%d\n", ints[i]);
  *    }
  *    free_vector(ints);
  * */

@@ -88,6 +88,19 @@ void resize_render_target(struct render_target* target, u32 width, u32 height);
 void bind_render_target(struct render_target* target);
 void bind_render_target_output(struct render_target* target, u32 unit);
 
+struct depth_map {
+	u32 id;
+	u32 width, height;
+
+	u32 output;
+};
+
+void clear_depth_map(struct depth_map* dm);
+void init_depth_map(struct depth_map* dm, u32 width, u32 height);
+void deinit_depth_map(struct depth_map* dm);
+void bind_depth_map(struct depth_map* dm);
+void bind_depth_map_output(struct depth_map* dm, u32 unit);
+
 struct color {
 	u8 r, g, b, a;
 };

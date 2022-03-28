@@ -7,6 +7,10 @@
 #include "mesh.h"
 #include "vector.h"
 
+struct aabb {
+	v3f min, max;
+};
+
 enum {
 	light_point = 0,
 	light_directional
@@ -27,6 +31,7 @@ struct light {
 
 		struct {
 			v3f direction;
+			bool cast_shadows;
 		} directional;
 	} as;
 };
@@ -70,3 +75,5 @@ void update_camera(GLFWwindow* window, struct camera* camera, f64 ts);
 m4f get_camera_view(struct camera* camera);
 m4f get_camera_proj(struct camera* camera, v2i screen_size);
 void camera_look(GLFWwindow* window, f64 x, f64 y);
+
+vector(v3f) get_frustum_corners(m4f proj, m4f view);
