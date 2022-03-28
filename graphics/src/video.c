@@ -155,6 +155,10 @@ void init_shader(struct shader* shader, const char* source, const char* name) {
 
 	glGetProgramiv(id, GL_LINK_STATUS, &success);
 	if (!success) {
+		char info_log[1024];
+		glGetProgramInfoLog(id, 1024, null, info_log);
+		fprintf(stderr, "Shader `%s' failed to link with the following errors:\n%s", name,
+			info_log);
 		shader->panic = true;
 	}
 
@@ -283,10 +287,10 @@ void bind_vb_for_edit(const struct vertex_buffer* vb) {
 	}
 }
 
-void push_vertices(const struct vertex_buffer* vb, f32* vertices, u32 count) {
+void push_vertices(const struct vertex_buffer* vb, void* vertices, u64 size) {
 	const u32 mode = vb->flags & vb_static ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 
-	glBufferData(GL_ARRAY_BUFFER, count * sizeof(f32), vertices, mode);
+	glBufferData(GL_ARRAY_BUFFER, size, vertices, mode);
 }
 
 void push_indices(struct vertex_buffer* vb, u32* indices, u32 count) {
@@ -297,9 +301,9 @@ void push_indices(struct vertex_buffer* vb, u32* indices, u32 count) {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(f32), indices, mode);
 }
 
-void update_vertices(const struct vertex_buffer* vb, f32* vertices, u32 offset, u32 count) {
+void update_vertices(const struct vertex_buffer* vb, void* vertices, u64 offset, u64 size) {
 	glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(f32),
-		count * sizeof(f32), vertices);
+		size, vertices);
 }
 
 void update_indices(struct vertex_buffer* vb, u32* indices, u32 offset, u32 count) {
@@ -310,10 +314,10 @@ void update_indices(struct vertex_buffer* vb, u32* indices, u32 offset, u32 coun
 }
 
 void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count,
-	u32 stride, u32 offset) {
+	u64 stride, u64 offset) {
 
 	glVertexAttribPointer(index, component_count, GL_FLOAT, GL_FALSE,
-		stride * sizeof(f32), (void*)(u64)(offset * sizeof(f32)));
+		stride, (void*)(u64)(offset));
 	glEnableVertexAttribArray(index);
 }
 
@@ -341,6 +345,7 @@ void draw_vb_n(const struct vertex_buffer* vb, u32 count) {
 
 void init_texture(struct texture* texture, const char* path) {
 	i32 w, h, n;
+	stbi_set_flip_vertically_on_load(true);
 	u8* src = stbi_load(path, &w, &h, &n, 4);
 
 	if (!src) {
@@ -390,7 +395,7 @@ void init_render_target(struct render_target* target, u32 width, u32 height) {
 	glGenTextures(1, &target->output);
 	glBindTexture(GL_TEXTURE_2D, target->output);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, null);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

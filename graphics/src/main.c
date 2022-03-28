@@ -29,18 +29,18 @@ void show_loading_screen(v2i screen_size) {
 	};
 
 	f32 verts[] = {
-		 0.5f,  0.5f, 1.0f, 1.0f,
-		 0.5f, -0.5f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f, 0.0f,
-		-0.5f,  0.5f, 0.0f, 1.0f
+		 0.5f,  0.5f, 1.0f, 0.0f,
+		 0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f,  0.5f, 0.0f, 0.0f
 	};
 
 	init_vb(&vb, vb_static | vb_tris);
 	bind_vb_for_edit(&vb);
-	push_vertices(&vb, verts, 16);
+	push_vertices(&vb, verts, 16 * sizeof(f32));
 	push_indices(&vb, indices, 6);
-	configure_vb(&vb, 0, 2, 4, 0); /* position (vec2) */
-	configure_vb(&vb, 1, 2, 4, 2); /* uv (vec2) */
+	configure_vb(&vb, 0, 2, 4 * sizeof(f32), 0); /* position (vec2) */
+	configure_vb(&vb, 1, 2, 4 * sizeof(f32), 8); /* uv (vec2) */
 	bind_vb_for_edit(null);
 
 	bind_shader(&shader);
@@ -65,7 +65,7 @@ void show_loading_screen(v2i screen_size) {
 	deinit_shader(&shader);
 	deinit_vb(&vb);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 }
 
 i32 main() {
@@ -102,22 +102,29 @@ i32 main() {
 	struct shader invert_shader = { 0 };
 	struct shader toon_shader = { 0 };
 	struct shader crt_shader = { 0 };
+	struct shader tonemap_shader = { 0 };
 
 	struct shader_config shaders = { 0 };
 	init_shader_from_file(&shaders.lit, "res/shaders/lit.glsl");
 	init_shader_from_file(&invert_shader, "res/shaders/invert.glsl");
 	init_shader_from_file(&toon_shader, "res/shaders/toon.glsl");
 	init_shader_from_file(&crt_shader, "res/shaders/crt.glsl");
+	init_shader_from_file(&tonemap_shader, "res/shaders/tonemap.glsl");
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
 	struct model* monkey = new_model_from_obj(&model);
 	deinit_obj(&model);
 
+	load_obj("res/soulspear.obj", &model);
+	struct model* soulspear = new_model_from_obj(&model);
+	soulspear->transform = m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f));
+	deinit_obj(&model);
+
 	struct renderer* renderer = new_renderer(shaders);
-	vector_push(renderer->postprocessors, toon_shader);
-	vector_push(renderer->postprocessors, crt_shader);
+	vector_push(renderer->postprocessors, tonemap_shader);
 	vector_push(renderer->drawlist, monkey);
+	vector_push(renderer->drawlist, soulspear);
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
 		.ambient = { 0 },
@@ -173,11 +180,13 @@ i32 main() {
 	}
 
 	free_model(monkey);
+	free_model(soulspear);
 
 	deinit_shader(&shaders.lit);
 	deinit_shader(&invert_shader);
 	deinit_shader(&toon_shader);
 	deinit_shader(&crt_shader);
+	deinit_shader(&tonemap_shader);
 
 	free_renderer(renderer);
 

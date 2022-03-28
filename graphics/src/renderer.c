@@ -28,10 +28,10 @@ struct renderer* new_renderer(struct shader_config config) {
 
 	init_vb(&renderer->fullscreen_quad, vb_static | vb_tris);
 	bind_vb_for_edit(&renderer->fullscreen_quad);
-	push_vertices(&renderer->fullscreen_quad, verts, 16);
+	push_vertices(&renderer->fullscreen_quad, verts, 16 * sizeof(f32));
 	push_indices(&renderer->fullscreen_quad, indices, 6);
-	configure_vb(&renderer->fullscreen_quad, 0, 2, 4, 0); /* position (vec2) */
-	configure_vb(&renderer->fullscreen_quad, 1, 2, 4, 2); /* uv (vec2) */
+	configure_vb(&renderer->fullscreen_quad, 0, 2, 4 * sizeof(f32), 0); /* position (vec2) */
+	configure_vb(&renderer->fullscreen_quad, 1, 2, 4 * sizeof(f32), 8); /* uv (vec2) */
 	bind_vb_for_edit(null);
 
 	return renderer;

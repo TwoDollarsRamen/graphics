@@ -2,23 +2,30 @@
 
 #define els_per_vert 8
 
-static bool vertex_equal(v3f pos, v3f norm, v2f uv, float* verts) {
+#pragma pack(push, 1)
+struct vertex {
+	v3f position, normal, tangent, binormal;
+	v2f uv;
+};
+#pragma pack(pop)
+
+static bool vertex_equal(v3f pos, v3f norm, v2f uv, struct vertex vert) {
 	return (
-		pos.x  == verts[0] &&
-		pos.y  == verts[1] &&
-		pos.z  == verts[2] &&
-		uv.x   == verts[3] &&
-		uv.y   == verts[4] &&
-		norm.x == verts[5] &&
-		norm.y == verts[6] &&
-		norm.z == verts[7]);
+		pos.x  == vert.position.x &&
+		pos.y  == vert.position.y &&
+		pos.z  == vert.position.z &&
+		uv.x   == vert.uv.x &&
+		uv.y   == vert.uv.y &&
+		norm.x == vert.normal.x &&
+		norm.y == vert.normal.y &&
+		norm.z == vert.normal.z);
 }
 
 static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj_mesh* omesh) {
 	mesh->ambient = mesh->diffuse = mesh->specular = make_v3f(1.0f, 1.0f, 1.0f);
 	mesh->shininess = 32.0f;
 
-	f32* verts = malloc(vector_count(omesh->vertices) * els_per_vert * sizeof(f32));
+	struct vertex* verts = calloc(vector_count(omesh->vertices), sizeof(struct vertex));
 	u32* indices = malloc(vector_count(omesh->vertices) * sizeof(u32));
 
 	u32 vertex_count = 0;
@@ -32,7 +39,7 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 		v2f uv = omodel->uvs[omesh->vertices[i].uv];
 
 		for (u32 ii = 0; ii < vertex_count; ii++) {
-			if (vertex_equal(pos, norm, uv, verts + ii * els_per_vert)) {
+			if (vertex_equal(pos, norm, uv, verts[ii])) {
 				indices[index_count++] = ii;
 				new = false;
 				break;
@@ -40,29 +47,69 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 		}
 
 		if (new) {
-			u32 idx = (vertex_count) * els_per_vert;
-
-			verts[idx + 0] = pos.x;
-			verts[idx + 1] = pos.y;
-			verts[idx + 2] = pos.z;
-			verts[idx + 3] = uv.x;
-			verts[idx + 4] = uv.y;
-			verts[idx + 5] = norm.x;
-			verts[idx + 6] = norm.y;
-			verts[idx + 7] = norm.z;
+			verts[vertex_count] = (struct vertex){
+				.position = pos,
+				.normal = norm,
+				.uv = uv,
+			};
 
 			indices[index_count++] = vertex_count;
 			vertex_count++;
 		}
 	}
 
+	/* Calculate tangents and binormals */
+	for (u32 i = 0; i < index_count; i += 3) {
+		v3f v0 = verts[i + 0].position;
+		v3f v1 = verts[i + 1].position;
+		v3f v2 = verts[i + 2].position;
+
+		v3f normal = v3f_cross(v3f_sub(v1, v0), v3f_sub(v2, v0));
+
+		v3f delta;
+		if (v0.x == v1.x && v0.y == v1.y) {
+			delta = v3f_sub(v2, v0);
+		} else {
+			delta = v3f_sub(v1, v0);
+		}
+
+		v2f uv0 = verts[i + 0].uv;
+		v2f uv1 = verts[i + 1].uv;
+		v2f uv2 = verts[i + 2].uv;
+
+		v2f delta_uv_1 = v2f_sub(uv1, uv0);
+		v2f delta_uv_2 = v2f_sub(uv2, uv0);
+
+		v3f tangent;
+
+		if (delta_uv_1.x != 0.0) {
+			tangent = make_v3f(delta.x / delta_uv_1.x, delta.y / delta_uv_2.x, delta.z / delta_uv_2.x);
+		} else {
+			tangent = make_v3f(delta.x / 1.0f, delta.y / 1.0f, delta.z / 1.0f);
+		}
+
+		f32 t_dot_n = v3f_dot(tangent, normal);
+		tangent = v3f_normalised(v3f_sub(tangent, v3f_mul(make_v3f(t_dot_n, t_dot_n, t_dot_n), normal)));
+		v3f binormal = v3f_normalised(v3f_cross(tangent, normal));
+
+		verts[i + 0].tangent = tangent;
+		verts[i + 1].tangent = tangent;
+		verts[i + 2].tangent = tangent;
+
+		verts[i + 0].binormal = binormal;
+		verts[i + 1].binormal = binormal;
+		verts[i + 2].binormal = binormal;
+	}
+
 	init_vb(&mesh->vb, vb_static | vb_tris);
 	bind_vb_for_edit(&mesh->vb);
-	push_vertices(&mesh->vb, verts, vertex_count * els_per_vert);
+	push_vertices(&mesh->vb, verts, vertex_count * sizeof(struct vertex));
 	push_indices(&mesh->vb, indices, index_count);
-	configure_vb(&mesh->vb, 0, 3, els_per_vert, 0); /* position (vec3) */
-	configure_vb(&mesh->vb, 1, 2, els_per_vert, 3); /* uv (vec2) */
-	configure_vb(&mesh->vb, 2, 3, els_per_vert, 5); /* normal (vec3) */
+	configure_vb(&mesh->vb, 0, 3, sizeof(struct vertex), offsetof(struct vertex, position)); /* position (vec3) */
+	configure_vb(&mesh->vb, 1, 2, sizeof(struct vertex), offsetof(struct vertex, uv)); /* uv (vec2) */
+	configure_vb(&mesh->vb, 2, 3, sizeof(struct vertex), offsetof(struct vertex, normal)); /* normal (vec3) */
+	configure_vb(&mesh->vb, 3, 3, sizeof(struct vertex), offsetof(struct vertex, tangent)); /* tangent (vec3) */
+	configure_vb(&mesh->vb, 4, 3, sizeof(struct vertex), offsetof(struct vertex, binormal)); /* binormal (vec3) */
 	bind_vb_for_edit(null);
 
 	free(verts);
@@ -88,6 +135,12 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 				mesh->use_specular_map = true;
 
 				init_texture(&mesh->specular_map, material->specular_map_path);
+			}
+
+			if (material->bump_map_path) {
+				mesh->use_normal_map = true;
+
+				init_texture(&mesh->normal_map, material->bump_map_path);
 			}
 		}
 	}
@@ -143,6 +196,12 @@ void draw_model(struct model* model, struct shader* shader) {
 		if (mesh->use_specular_map) {
 			bind_texture(&model->meshes[i].specular_map, 1);
 			shader_set_i(shader, "specular_map", 1);
+		}
+
+		shader_set_b(shader, "use_normal_map", mesh->use_normal_map);
+		if (mesh->use_normal_map) {
+			bind_texture(&model->meshes[i].normal_map, 2);
+			shader_set_i(shader, "normal_map", 2);
 		}
 
 		shader_set_v3f(shader, "material.ambient",   mesh->ambient);

@@ -15,6 +15,9 @@ struct mesh {
 
 	bool use_specular_map;
 	struct texture specular_map;
+
+	bool use_normal_map;
+	struct texture normal_map;
 };
 
 struct model {

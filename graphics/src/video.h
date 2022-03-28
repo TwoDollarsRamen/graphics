@@ -55,12 +55,12 @@ void init_vb(struct vertex_buffer* vb, const i32 flags);
 void deinit_vb(struct vertex_buffer* vb);
 void bind_vb_for_draw(const struct vertex_buffer* vb);
 void bind_vb_for_edit(const struct vertex_buffer* vb);
-void push_vertices(const struct vertex_buffer* vb, f32* vertices, u32 count);
+void push_vertices(const struct vertex_buffer* vb, void* vertices, u64 size);
 void push_indices(struct vertex_buffer* vb, u32* indices, u32 count);
-void update_vertices(const struct vertex_buffer* vb, f32* vertices, u32 offset, u32 count);
+void update_vertices(const struct vertex_buffer* vb, void* vertices, u64 offset, u64 size);
 void update_indices(struct vertex_buffer* vb, u32* indices, u32 offset, u32 count);
 void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count,
-	u32 stride, u32 offset);
+	u64 stride, u64 offset);
 void draw_vb(const struct vertex_buffer* vb);
 void draw_vb_n(const struct vertex_buffer* vb, u32 count);
 
