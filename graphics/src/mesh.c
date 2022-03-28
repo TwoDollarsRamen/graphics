@@ -60,45 +60,41 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 
 	/* Calculate tangents and binormals */
 	for (u32 i = 0; i < index_count; i += 3) {
-		v3f v0 = verts[i + 0].position;
-		v3f v1 = verts[i + 1].position;
-		v3f v2 = verts[i + 2].position;
+		v3f pos1 = verts[indices[i + 0]].position;
+		v3f pos2 = verts[indices[i + 1]].position;
+		v3f pos3 = verts[indices[i + 2]].position;
 
-		v3f normal = v3f_cross(v3f_sub(v1, v0), v3f_sub(v2, v0));
+		v2f uv1 = verts[indices[i + 0]].uv;
+		v2f uv2 = verts[indices[i + 1]].uv;
+		v2f uv3 = verts[indices[i + 2]].uv;
 
-		v3f delta;
-		if (v0.x == v1.x && v0.y == v1.y) {
-			delta = v3f_sub(v2, v0);
-		} else {
-			delta = v3f_sub(v1, v0);
-		}
+		v2f delta_uv_1 = v2f_sub(uv2, uv1);
+		v2f delta_uv_2 = v2f_sub(uv3, uv1);
 
-		v2f uv0 = verts[i + 0].uv;
-		v2f uv1 = verts[i + 1].uv;
-		v2f uv2 = verts[i + 2].uv;
+		v3f edge_1 = v3f_sub(pos2, pos1);
+		v3f edge_2 = v3f_sub(pos3, pos1);
 
-		v2f delta_uv_1 = v2f_sub(uv1, uv0);
-		v2f delta_uv_2 = v2f_sub(uv2, uv0);
+		f32 f = 1.0f / (delta_uv_1.x * delta_uv_2.y - delta_uv_2.x * delta_uv_1.y);
 
-		v3f tangent;
+		v3f tangent = {
+			.x = f * (delta_uv_2.y * edge_1.x - delta_uv_1.y * edge_2.x),
+			.y = f * (delta_uv_2.y * edge_1.y - delta_uv_1.y * edge_2.y),
+			.z = f * (delta_uv_2.y * edge_1.z - delta_uv_1.y * edge_2.z)
+		};
 
-		if (delta_uv_1.x != 0.0) {
-			tangent = make_v3f(delta.x / delta_uv_1.x, delta.y / delta_uv_2.x, delta.z / delta_uv_2.x);
-		} else {
-			tangent = make_v3f(delta.x / 1.0f, delta.y / 1.0f, delta.z / 1.0f);
-		}
+		v3f binormal = {
+			.x = f * (-delta_uv_2.x * edge_1.x + delta_uv_1.x * edge_2.x),
+			.y = f * (-delta_uv_2.x * edge_1.y + delta_uv_1.x * edge_2.y),
+			.z = f * (-delta_uv_2.x * edge_1.z + delta_uv_1.x * edge_2.z)
+		};
 
-		f32 t_dot_n = v3f_dot(tangent, normal);
-		tangent = v3f_normalised(v3f_sub(tangent, v3f_mul(make_v3f(t_dot_n, t_dot_n, t_dot_n), normal)));
-		v3f binormal = v3f_normalised(v3f_cross(tangent, normal));
+		verts[indices[i + 0]].tangent = tangent;
+		verts[indices[i + 1]].tangent = tangent;
+		verts[indices[i + 2]].tangent = tangent;
 
-		verts[i + 0].tangent = tangent;
-		verts[i + 1].tangent = tangent;
-		verts[i + 2].tangent = tangent;
-
-		verts[i + 0].binormal = binormal;
-		verts[i + 1].binormal = binormal;
-		verts[i + 2].binormal = binormal;
+		verts[indices[i + 0]].binormal = binormal;
+		verts[indices[i + 1]].binormal = binormal;
+		verts[indices[i + 2]].binormal = binormal;
 	}
 
 	init_vb(&mesh->vb, vb_static | vb_tris);

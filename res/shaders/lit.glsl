@@ -20,8 +20,8 @@ out VS_OUT {
 
 void main() {
 	vec3 t = normalize(vec3(transform * vec4(tangent, 0.0)));
-	vec3 b = normalize(vec3(transform * vec4(binormal, 0.0)));
 	vec3 n = normalize(vec3(transform * vec4(normal, 0.0)));
+	vec3 b = normalize(vec3(transform * vec4(binormal, 0.0)));
 	
 	vs_out.tbn = mat3(t, b, n);
 	
@@ -148,7 +148,7 @@ void main() {
 	}
 
 	color = vec4(lighting_result, 1.0);
-	color = vec4(n, 1.0);
+	//color = vec4(fs_in.tbn[1], 1.0);
 }
 
 #end FRAGMENT
