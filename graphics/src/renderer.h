@@ -7,6 +7,8 @@
 #include "mesh.h"
 #include "vector.h"
 
+struct camera;
+
 struct aabb {
 	v3f min, max;
 };
@@ -76,4 +78,4 @@ m4f get_camera_view(struct camera* camera);
 m4f get_camera_proj(struct camera* camera, v2i screen_size);
 void camera_look(GLFWwindow* window, f64 x, f64 y);
 
-vector(v3f) get_frustum_corners(m4f proj, m4f view);
+vector(v4f) get_frustum_corners(m4f proj, m4f view);

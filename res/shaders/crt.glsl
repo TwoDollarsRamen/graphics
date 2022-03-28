@@ -47,7 +47,7 @@ void main() {
 
 	vec2 ps = uv * screen_size;
 
-	vec4 color = texture2D(input_texture, uv);
+	vec4 color = texture(input_texture, uv);
 
 	out_color = vec4(color.r * 0.7, color.g * 0.7, color.b * 0.7, 1);
 	int pp = int(ps.x) % 3;

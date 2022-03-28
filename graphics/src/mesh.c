@@ -1,3 +1,6 @@
+#include <stddef.h>
+#include <stdio.h>
+
 #include "mesh.h"
 
 #define els_per_vert 8

@@ -51,8 +51,8 @@ static m4f get_light_matrix(struct light* light, m4f view, f32 near_plane, f32 f
 
 	v3f centre = { 0 };
 
-	for (v3f* vector_iter(corners, c)) {
-		centre = v3f_add(centre, *c);
+	for (v4f* vector_iter(corners, c)) {
+		centre = v3f_add(centre, make_v3f(c->x, c->y, c->z));
 	}
 
 	centre = make_v3f(centre.x / vector_count(corners), centre.y / vector_count(corners), centre.z / vector_count(corners));
@@ -64,8 +64,8 @@ static m4f get_light_matrix(struct light* light, m4f view, f32 near_plane, f32 f
 		.max = { -INFINITY, -INFINITY, -INFINITY }
 	};
 
-	for (v3f* vector_iter(corners, c)) {
-		v4f trf = m4f_transform(light_view, make_v4f(c->x, c->y, c->z, 0.0f));
+	for (v4f* vector_iter(corners, c)) {
+		v4f trf = m4f_transform(light_view, *c);
 		box.min.x = minimum(box.min.x, trf.x);
 		box.min.y = minimum(box.min.y, trf.y);
 		box.min.x = minimum(box.min.z, trf.z);
@@ -284,7 +284,7 @@ void camera_look(GLFWwindow* window, f64 x, f64 y) {
 	);
 }
 
-vector(v3f) get_frustum_corners(m4f proj, m4f view) {
+vector(v4f) get_frustum_corners(m4f proj, m4f view) {
 	const m4f invvp = m4f_inverse(m4f_mul(proj, view));
 
 	vector(v4f) r;
