@@ -103,6 +103,7 @@ i32 main() {
 	struct shader toon_shader = { 0 };
 	struct shader crt_shader = { 0 };
 	struct shader tonemap_shader = { 0 };
+	struct shader antialias_shader = { 0 };
 
 	struct shader_config shaders = { 0 };
 	init_shader_from_file(&shaders.lit, "res/shaders/lit.glsl");
@@ -110,6 +111,7 @@ i32 main() {
 	init_shader_from_file(&toon_shader, "res/shaders/toon.glsl");
 	init_shader_from_file(&crt_shader, "res/shaders/crt.glsl");
 	init_shader_from_file(&tonemap_shader, "res/shaders/tonemap.glsl");
+	init_shader_from_file(&antialias_shader, "res/shaders/antialias.glsl");
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
@@ -122,6 +124,7 @@ i32 main() {
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
+	vector_push(renderer->postprocessors, antialias_shader);
 	vector_push(renderer->postprocessors, tonemap_shader);
 	vector_push(renderer->drawlist, monkey);
 	vector_push(renderer->drawlist, soulspear);
@@ -156,7 +159,7 @@ i32 main() {
 			.diffuse = { 1.0f, 1.0f, 1.0f },
 			.intensity = 0.5f,
 			.as.directional = {
-				.direction = { 0.0f, 1.0f, 0.0f },
+				.direction = { 0.3f, 1.0f, 0.3f },
 		}
 	}));
 
@@ -187,6 +190,7 @@ i32 main() {
 	deinit_shader(&toon_shader);
 	deinit_shader(&crt_shader);
 	deinit_shader(&tonemap_shader);
+	deinit_shader(&antialias_shader);
 
 	free_renderer(renderer);
 
