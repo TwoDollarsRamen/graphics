@@ -275,6 +275,7 @@ m4f m4f_mul(m4f a, m4f b);
 m4f m4f_lookat(v3f c, v3f o, v3f u);
 m4f m4f_pers(f32 fov, f32 asp, f32 n, f32 f);
 m4f m4f_orth(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
+m4f m4f_inverse(m4f m);
 
 typedef struct {
 	u32 m[3][3];
