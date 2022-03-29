@@ -51,6 +51,7 @@ struct renderer {
 	float ambient_intensity;
 
 	struct vertex_buffer fullscreen_quad;
+	struct render_target scene_fb;
 	struct render_target fb0, fb1; /* Ping-pong framebuffers, for post-processing. */
 
 	vector(struct shader) postprocessors;

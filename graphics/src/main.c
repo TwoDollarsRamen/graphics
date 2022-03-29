@@ -105,6 +105,10 @@ i32 main() {
 	struct shader crt_shader = { 0 };
 	struct shader tonemap_shader = { 0 };
 	struct shader antialias_shader = { 0 };
+	struct shader blur_shader = { 0 };
+	struct shader ca_shader = { 0 };
+	struct shader bright_extract_shader = { 0 };
+	struct shader bloom_shader = { 0 };
 
 	struct shader_config shaders = { 0 };
 	init_shader_from_file(&shaders.lit, "res/shaders/lit.glsl");
@@ -114,6 +118,10 @@ i32 main() {
 	init_shader_from_file(&crt_shader, "res/shaders/crt.glsl");
 	init_shader_from_file(&tonemap_shader, "res/shaders/tonemap.glsl");
 	init_shader_from_file(&antialias_shader, "res/shaders/antialias.glsl");
+	init_shader_from_file(&blur_shader, "res/shaders/blur.glsl");
+	init_shader_from_file(&ca_shader, "res/shaders/ca.glsl");
+	init_shader_from_file(&bright_extract_shader, "res/shaders/bright_extract.glsl");
+	init_shader_from_file(&bloom_shader, "res/shaders/bloom.glsl");
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
@@ -126,8 +134,12 @@ i32 main() {
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
-	vector_push(renderer->postprocessors, antialias_shader);
+	vector_push(renderer->postprocessors, bright_extract_shader);
+	vector_push(renderer->postprocessors, blur_shader);
+	vector_push(renderer->postprocessors, bloom_shader);
+//	vector_push(renderer->postprocessors, ca_shader);
 	vector_push(renderer->postprocessors, tonemap_shader);
+	vector_push(renderer->postprocessors, antialias_shader);
 	vector_push(renderer->drawlist, monkey);
 	vector_push(renderer->drawlist, soulspear);
 	vector_push(renderer->lights, ((struct light) {
@@ -195,6 +207,10 @@ i32 main() {
 	deinit_shader(&crt_shader);
 	deinit_shader(&tonemap_shader);
 	deinit_shader(&antialias_shader);
+	deinit_shader(&blur_shader);
+	deinit_shader(&ca_shader);
+	deinit_shader(&bright_extract_shader);
+	deinit_shader(&bloom_shader);
 
 	free_renderer(renderer);
 

@@ -11,6 +11,7 @@ struct renderer* new_renderer(struct shader_config config) {
 	renderer->ambient = make_v3f(1.0, 1.0, 1.0);
 	renderer->ambient_intensity = 0.1f;
 
+	init_render_target(&renderer->scene_fb, screen_w, screen_h);
 	init_render_target(&renderer->fb0, screen_w, screen_h);
 	init_render_target(&renderer->fb1, screen_w, screen_h);
 
@@ -162,8 +163,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	}
 
 	if (vector_count(renderer->postprocessors) > 0) {
-		bind_render_target(&renderer->fb0);
-		clear_render_target(&renderer->fb0);
+		bind_render_target(&renderer->scene_fb);
+		clear_render_target(&renderer->scene_fb);
 	}
 
 	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
@@ -261,8 +262,15 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 			bind_shader(shader);
 
-			bind_render_target_output(last_target, 0);
+			if (i == 0) {
+				bind_render_target_output(&renderer->scene_fb, 0);
+			} else {
+				bind_render_target_output(last_target, 0);
+			}
+
 			shader_set_i(shader, "input_texture", 0);
+			bind_render_target_output(&renderer->scene_fb, 1);
+			shader_set_i(shader, "original_texture", 1);
 			shader_set_v2f(shader, "screen_size", make_v2f(screen_w, screen_h));
 
 			bind_vb_for_draw(&renderer->fullscreen_quad);
