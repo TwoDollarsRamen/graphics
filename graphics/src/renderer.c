@@ -85,7 +85,7 @@ static m4f get_light_matrix(struct light* light, struct aabb scene) {
 
 	scene = transform_aabb(scene, view);
 
-	float z_mul = 10.0f;
+	float z_mul = 3.0f;
 	if (scene.min.z < 0.0f) {
 		scene.min.z *= z_mul;
 	} else {

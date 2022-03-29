@@ -122,13 +122,17 @@ vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_di
 	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 
 	/* Shadow calculation. */
-	float bias = 0.005;
+	float shadow = 0.0;
 
-	vec3 proj_coords = fs_in.light_pos.xyz / fs_in.light_pos.w;
-	proj_coords = proj_coords * 0.5 + 0.5;
-	float closest_depth = texture(shadowmap, proj_coords.xy).r;
-	float current_depth = proj_coords.z;
-	float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+	if (use_shadows) {
+		float bias = 0.005;
+
+		vec3 proj_coords = fs_in.light_pos.xyz / fs_in.light_pos.w;
+		proj_coords = proj_coords * 0.5 + 0.5;
+		float closest_depth = texture(shadowmap, proj_coords.xy).r;
+		float current_depth = proj_coords.z;
+		shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+	}
 
 	return (1.0 - shadow) * (diffuse + specular);
 }
