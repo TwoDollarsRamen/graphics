@@ -93,12 +93,15 @@ struct depth_map {
 	u32 width, height;
 
 	u32 output;
+
+	i32 old_viewport[4];
 };
 
 void clear_depth_map(struct depth_map* dm);
 void init_depth_map(struct depth_map* dm, u32 width, u32 height);
 void deinit_depth_map(struct depth_map* dm);
 void bind_depth_map(struct depth_map* dm);
+void unbind_depth_map(struct depth_map* dm);
 void bind_depth_map_output(struct depth_map* dm, u32 unit);
 
 struct color {

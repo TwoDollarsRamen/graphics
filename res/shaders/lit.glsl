@@ -8,14 +8,16 @@ layout (location = 2) in vec3 normal;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 binormal;
 
-uniform mat4 projection = mat4(0.0);
-uniform mat4 view = mat4(0.0);
-uniform mat4 transform = mat4(0.0);
+uniform mat4 projection = mat4(1.0);
+uniform mat4 view = mat4(1.0);
+uniform mat4 transform = mat4(1.0);
+uniform mat4 light_matrix = mat4(1.0);
 
 out VS_OUT {
 	vec2 uv;
 	vec3 world_pos;
 	mat3 tbn;
+	vec4 light_pos;
 } vs_out;
 
 void main() {
@@ -27,6 +29,7 @@ void main() {
 	
 	vs_out.uv = uv;
 	vs_out.world_pos = vec3(transform * vec4(position, 1.0));
+	vs_out.light_pos = light_matrix * vec4(vs_out.world_pos, 1.0);
 
 	gl_Position = projection * view * transform * vec4(position, 1.0);
 }
@@ -43,6 +46,7 @@ in VS_OUT {
 	vec2 uv;
 	vec3 world_pos;
 	mat3 tbn;
+	vec4 light_pos;
 } fs_in;
 
 uniform bool use_diffuse_map = false;
@@ -53,6 +57,9 @@ uniform sampler2D specular_map;
 
 uniform bool use_normal_map = false;
 uniform sampler2D normal_map;
+
+uniform bool use_shadows = false;
+uniform sampler2D shadowmap;
 
 #define max_point_lights 32
 #define max_directional_lights 3
@@ -114,7 +121,16 @@ vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_di
 	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0);
 	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 
-	return diffuse + specular;
+	/* Shadow calculation. */
+	float bias = 0.005;
+
+	vec3 proj_coords = fs_in.light_pos.xyz / fs_in.light_pos.w;
+	proj_coords = proj_coords * 0.5 + 0.5;
+	float closest_depth = texture(shadowmap, proj_coords.xy).r;
+	float current_depth = proj_coords.z;
+	float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+	return (1.0 - shadow) * (diffuse + specular);
 }
 
 void main() {

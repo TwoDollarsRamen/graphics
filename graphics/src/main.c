@@ -92,7 +92,8 @@ i32 main() {
 		.position = { 0.0f, 0.0f, 5.0f },
 		.front = { 0.0f, 0.0f, -1.0f },
 		.up = { 0.0f, 1.0f, 0.0f },
-		.first_mouse = true
+		.first_mouse = true,
+		.near = 0.1f, .far = 1000.0f
 	};
 
 	glfwSetWindowUserPointer(window, &camera);
@@ -107,6 +108,7 @@ i32 main() {
 
 	struct shader_config shaders = { 0 };
 	init_shader_from_file(&shaders.lit, "res/shaders/lit.glsl");
+	init_shader_from_file(&shaders.shadowmap, "res/shaders/shadowmap.glsl");
 	init_shader_from_file(&invert_shader, "res/shaders/invert.glsl");
 	init_shader_from_file(&toon_shader, "res/shaders/toon.glsl");
 	init_shader_from_file(&crt_shader, "res/shaders/crt.glsl");
@@ -187,6 +189,7 @@ i32 main() {
 	free_model(soulspear);
 
 	deinit_shader(&shaders.lit);
+	deinit_shader(&shaders.shadowmap);
 	deinit_shader(&invert_shader);
 	deinit_shader(&toon_shader);
 	deinit_shader(&crt_shader);

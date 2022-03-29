@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 
@@ -24,7 +25,7 @@ static bool vertex_equal(v3f pos, v3f norm, v2f uv, struct vertex vert) {
 		norm.z == vert.normal.z);
 }
 
-static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj_mesh* omesh) {
+static void process_mesh(struct model* model, struct mesh* mesh, struct obj_model* omodel, struct obj_mesh* omesh) {
 	mesh->ambient = mesh->diffuse = mesh->specular = make_v3f(1.0f, 1.0f, 1.0f);
 	mesh->shininess = 32.0f;
 
@@ -40,6 +41,14 @@ static void process_mesh(struct mesh* mesh, struct obj_model* omodel, struct obj
 		v3f pos = omodel->positions[omesh->vertices[i].position];
 		v3f norm = omodel->normals[omesh->vertices[i].normal];
 		v2f uv = omodel->uvs[omesh->vertices[i].uv];
+
+		if (pos.x < model->aabb.min.x) { model->aabb.min.x = pos.x; }
+		if (pos.y < model->aabb.min.y) { model->aabb.min.y = pos.y; }
+		if (pos.z < model->aabb.min.z) { model->aabb.min.z = pos.z; }
+
+		if (pos.x > model->aabb.max.x) { model->aabb.max.x = pos.x; }
+		if (pos.y > model->aabb.max.y) { model->aabb.max.y = pos.y; }
+		if (pos.z > model->aabb.max.z) { model->aabb.max.z = pos.z; }
 
 		for (u32 ii = 0; ii < vertex_count; ii++) {
 			if (vertex_equal(pos, norm, uv, verts[ii])) {
@@ -150,18 +159,23 @@ struct model* new_model_from_obj(struct obj_model* omodel) {
 
 	model->transform = m4f_identity();
 
+	model->aabb = (struct aabb) {
+		.min = { INFINITY, INFINITY, INFINITY },
+		.max = { -INFINITY, -INFINITY, -INFINITY }
+	};
+
 	if (omodel->has_root_mesh) {	
 		struct mesh mesh = { 0 };
 		vector_push(model->meshes, mesh);
 
-		process_mesh(vector_end(model->meshes), omodel, &omodel->root_mesh);
+		process_mesh(model, vector_end(model->meshes), omodel, &omodel->root_mesh);
 	}
 
 	for (u32 i = 0; i < vector_count(omodel->meshes); i++) {
 		struct mesh mesh = { 0 };
 		vector_push(model->meshes, mesh);
 
-		process_mesh(vector_end(model->meshes), omodel, omodel->meshes + i);
+		process_mesh(model, vector_end(model->meshes), omodel, omodel->meshes + i);
 	}
 
 	printf("Processed model.\n");
@@ -187,20 +201,20 @@ void draw_model(struct model* model, struct shader* shader) {
 
 		shader_set_b(shader, "use_diffuse_map", mesh->use_diffuse_map);
 		if (mesh->use_diffuse_map) {
-			bind_texture(&model->meshes[i].diffuse_map, 0);
-			shader_set_i(shader, "diffuse_map", 0);
+			bind_texture(&model->meshes[i].diffuse_map, 1);
+			shader_set_i(shader, "diffuse_map", 1);
 		}
 
 		shader_set_b(shader, "use_specular_map", mesh->use_specular_map);
 		if (mesh->use_specular_map) {
-			bind_texture(&model->meshes[i].specular_map, 1);
-			shader_set_i(shader, "specular_map", 1);
+			bind_texture(&model->meshes[i].specular_map, 2);
+			shader_set_i(shader, "specular_map", 2);
 		}
 
 		shader_set_b(shader, "use_normal_map", mesh->use_normal_map);
 		if (mesh->use_normal_map) {
-			bind_texture(&model->meshes[i].normal_map, 2);
-			shader_set_i(shader, "normal_map", 2);
+			bind_texture(&model->meshes[i].normal_map, 3);
+			shader_set_i(shader, "normal_map", 3);
 		}
 
 		shader_set_v3f(shader, "material.ambient",   mesh->ambient);

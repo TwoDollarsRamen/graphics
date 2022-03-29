@@ -483,8 +483,10 @@ void init_depth_map(struct depth_map* dm, u32 width, u32 height) {
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); 
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, dm->output, 0);
 
@@ -504,7 +506,24 @@ void deinit_depth_map(struct depth_map* dm) {
 }
 
 void bind_depth_map(struct depth_map* dm) {
-	if (!dm) { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+	if (!dm) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return;
+	}
+
+	glGetIntegerv(GL_VIEWPORT, dm->old_viewport);
+	glViewport(0, 0, dm->width, dm->height);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, dm->id);
+}
+
+void unbind_depth_map(struct depth_map* dm) {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(
+		dm->old_viewport[0],
+		dm->old_viewport[1],
+		dm->old_viewport[2],
+		dm->old_viewport[3]);
 }
 
 void clear_depth_map(struct depth_map* dm) {

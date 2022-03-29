@@ -9,10 +9,6 @@
 
 struct camera;
 
-struct aabb {
-	v3f min, max;
-};
-
 enum {
 	light_point = 0,
 	light_directional
@@ -40,11 +36,14 @@ struct light {
 
 struct shader_config {
 	struct shader lit;
+	struct shader shadowmap;
 };
 
 struct renderer {
 	vector(struct model*) drawlist;
 	vector(struct light) lights;
+
+	struct depth_map shadowmap;
 
 	struct shader_config shaders;
 
@@ -71,6 +70,8 @@ struct camera {
 
 	f32 last_x, last_y;
 	f32 yaw, pitch;
+
+	float near, far;
 };
 
 void update_camera(GLFWwindow* window, struct camera* camera, f64 ts);

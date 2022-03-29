@@ -14,6 +14,8 @@ struct renderer* new_renderer(struct shader_config config) {
 	init_render_target(&renderer->fb0, screen_w, screen_h);
 	init_render_target(&renderer->fb1, screen_w, screen_h);
 
+	init_depth_map(&renderer->shadowmap, 1024, 1024);
+
 	u32 indices[] = {
 		0, 1, 3,
 		1, 2, 3
@@ -44,78 +46,111 @@ void free_renderer(struct renderer* renderer) {
 	free(renderer);
 }
 
-static m4f get_light_matrix(struct light* light, m4f view, f32 near_plane, f32 far_plane) {
-	m4f cam_proj = m4f_pers(75.0f, (f32)screen_w / (f32)screen_h, near_plane, far_plane);
+static struct aabb transform_aabb(struct aabb aabb, m4f matrix) {
+	v3f corners[] = {
+		aabb.min,
+		make_v3f(aabb.min.x, aabb.max.y, aabb.min.z),
+		make_v3f(aabb.min.x, aabb.max.y, aabb.max.z),
+		make_v3f(aabb.min.x, aabb.min.y, aabb.max.z),
+		make_v3f(aabb.max.x, aabb.min.y, aabb.min.z),
+		make_v3f(aabb.max.x, aabb.max.y, aabb.min.z),
+		aabb.max,
+		make_v3f(aabb.max.x, aabb.min.y, aabb.max.z)
+	};
 
-	vector(v4f) corners = get_frustum_corners(cam_proj, view);
-
-	v3f centre = { 0 };
-
-	for (v4f* vector_iter(corners, c)) {
-		centre = v3f_add(centre, make_v3f(c->x, c->y, c->z));
-	}
-
-	centre = make_v3f(centre.x / vector_count(corners), centre.y / vector_count(corners), centre.z / vector_count(corners));
-
-	m4f light_view = m4f_lookat(v3f_add(centre, light->as.directional.direction), centre, make_v3f(0.0f, 1.0f, 0.0f));
-
-	struct aabb box = {
+	struct aabb result = {
 		.min = { INFINITY, INFINITY, INFINITY },
 		.max = { -INFINITY, -INFINITY, -INFINITY }
 	};
 
-	for (v4f* vector_iter(corners, c)) {
-		v4f trf = m4f_transform(light_view, *c);
-		box.min.x = minimum(box.min.x, trf.x);
-		box.min.y = minimum(box.min.y, trf.y);
-		box.min.x = minimum(box.min.z, trf.z);
-		box.max.x = minimum(box.max.x, trf.x);
-		box.max.y = minimum(box.max.y, trf.y);
-		box.max.x = minimum(box.max.z, trf.z);
+	for (u32 i = 0; i < 8; i++) {
+		v4f point = m4f_transform(matrix, make_v4f(corners[i].x, corners[i].y, corners[i].z, 1.0f));
+
+		result.min.x = minimum(result.min.x, point.x);
+		result.min.y = minimum(result.min.y, point.y);
+		result.min.z = minimum(result.min.z, point.z);
+		result.max.x = maximum(result.max.x, point.x);
+		result.max.y = maximum(result.max.y, point.y);
+		result.max.z = maximum(result.max.z, point.z);
 	}
 
-	float zmul = 10.0f;
-	if (box.min.z < 0.0f) {
-		box.min.z *= zmul;
-	}
-	else {
-		box.min.z /= zmul;
-	}
+	return result;
+}
 
-	if (box.max.z < 0.0f) {
-		box.max.z /= zmul;
-	}
-	else {
-		box.max.z *= zmul;
-	}
+static m4f get_light_matrix(struct light* light, struct aabb scene) {
+	m4f view = m4f_lookat(
+		light->as.directional.direction,
+		make_v3f(0.0f, 0.0f, 0.0f),
+		make_v3f(0.0f, 1.0f, 0.0f));
 
-	m4f light_proj = m4f_orth(box.min.x, box.max.x, box.min.y, box.max.y, box.min.z, box.max.z);
+	scene = transform_aabb(scene, view);
 
-	free_vector(corners);
-
-	return m4f_mul(light_proj, light_view);
+	m4f proj = m4f_orth(
+		scene.min.x, scene.max.x,
+		scene.min.y, scene.max.y,
+		scene.min.z, scene.max.z);
+	
+	return m4f_mul(proj, view);
 }
 
 void renderer_draw(struct renderer* renderer, struct camera* camera) {
-	if (vector_count(renderer->postprocessors) > 0) {
-		bind_render_target(&renderer->fb0);
-		clear_render_target(&renderer->fb0);
-	}
+	m4f camera_proj = get_camera_proj(camera, make_v2i(screen_w, screen_h));
+	m4f camera_view = get_camera_view(camera);
 
 	enable_cull_face();
 
-	m4f camera_proj = get_camera_proj(camera, make_v2i(screen_w, screen_h));
-	m4f camera_view = get_camera_view(camera);
+	m4f light_matrix;
+
+	struct aabb scene_aabb = {
+		.min = { INFINITY, INFINITY, INFINITY },
+		.max = { -INFINITY, -INFINITY, -INFINITY }
+	};
+
+	/* Generate an AABB of the scene so that the shadow map can get a tight fit. */
+	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
+		struct model* model = *model_ptr;
+
+		struct aabb model_aabb = transform_aabb(model->aabb, model->transform);
+
+		scene_aabb.min.x = minimum(scene_aabb.min.x, model_aabb.min.x);
+		scene_aabb.min.y = minimum(scene_aabb.min.y, model_aabb.min.y);
+		scene_aabb.min.z = minimum(scene_aabb.min.z, model_aabb.min.z);
+		scene_aabb.max.x = maximum(scene_aabb.max.x, model_aabb.max.x);
+		scene_aabb.max.y = maximum(scene_aabb.max.y, model_aabb.max.y);
+		scene_aabb.max.z = maximum(scene_aabb.max.z, model_aabb.max.z);
+	}
 
 	/* Render the shadow-map. */
 	bool shadowmap_exists = false;
 	for (struct light* vector_iter(renderer->lights, light)) {
 		if (light->type == light_directional && light->as.directional.cast_shadows) {
-			
+			light_matrix = get_light_matrix(light, scene_aabb);
+
+			clear_depth_map(&renderer->shadowmap);
+
+			struct shader* s = &renderer->shaders.shadowmap;
+			bind_shader(s);
+
+			shader_set_m4f(s, "light_matrix", light_matrix);
+
+			for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
+				struct model* model = *model_ptr;
+	
+				shader_set_m4f(s, "transform", model->transform);
+
+				draw_model(model, s);
+			}
+
+			unbind_depth_map(&renderer->shadowmap);
 
 			shadowmap_exists = true;
 			break;
 		}
+	}
+
+	if (vector_count(renderer->postprocessors) > 0) {
+		bind_render_target(&renderer->fb0);
+		clear_render_target(&renderer->fb0);
 	}
 
 	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
@@ -176,6 +211,13 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 					break;
 				default: break;
 			}
+		}
+
+		shader_set_b(s, "use_shadows", shadowmap_exists);
+		if (shadowmap_exists) {
+			bind_depth_map_output(&renderer->shadowmap, 0);
+			shader_set_i(s, "shadowmap", 0);
+			shader_set_m4f(s, "light_matrix", light_matrix);
 		}
 
 		shader_set_u(s, "point_light_count", point_count);
@@ -242,7 +284,7 @@ m4f get_camera_view(struct camera* camera) {
 }
 
 m4f get_camera_proj(struct camera* camera, v2i screen_size) {
-	return m4f_pers(75.0f, (f32)screen_size.x / (f32)screen_size.y, 0.0f, 100.0f);
+	return m4f_pers(75.0f, (f32)screen_size.x / (f32)screen_size.y, camera->near, camera->far);
 }
 
 void camera_look(GLFWwindow* window, f64 x, f64 y) {
@@ -287,7 +329,7 @@ void camera_look(GLFWwindow* window, f64 x, f64 y) {
 vector(v4f) get_frustum_corners(m4f proj, m4f view) {
 	const m4f invvp = m4f_inverse(m4f_mul(proj, view));
 
-	vector(v4f) r;
+	vector(v4f) r = null;
 
 	for (unsigned int x = 0; x < 2; x++) {
 		for (unsigned int y = 0; y < 2; y++) {
