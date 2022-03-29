@@ -136,6 +136,7 @@ i32 main() {
 	struct renderer* renderer = new_renderer(shaders);
 	vector_push(renderer->postprocessors, bright_extract_shader);
 	vector_push(renderer->postprocessors, blur_shader);
+	vector_push(renderer->postprocessors, blur_shader);
 	vector_push(renderer->postprocessors, bloom_shader);
 //	vector_push(renderer->postprocessors, ca_shader);
 	vector_push(renderer->postprocessors, tonemap_shader);
