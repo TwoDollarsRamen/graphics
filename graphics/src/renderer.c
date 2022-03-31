@@ -47,6 +47,8 @@ void free_renderer(struct renderer* renderer) {
 	free(renderer);
 }
 
+/* Transform an AABB by a matrix. This could be used so that
+ * a rotated or scaled object could fit inside an AABB. */
 static struct aabb transform_aabb(struct aabb aabb, m4f matrix) {
 	v3f corners[] = {
 		aabb.min,
@@ -242,6 +244,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	
 	disable_cull_face();
 
+	/* Run the post-processing on the scene, using the ping-pong frame buffers. */
 	if (vector_count(renderer->postprocessors) > 0) {
 		struct render_target* last_target = &renderer->fb0;
 
@@ -345,25 +348,4 @@ void camera_look(GLFWwindow* window, f64 x, f64 y) {
 			sin(toradf(camera->yaw)) * cos(toradf(camera->pitch))
 		)
 	);
-}
-
-vector(v4f) get_frustum_corners(m4f proj, m4f view) {
-	const m4f invvp = m4f_invert(m4f_mul(proj, view));
-
-	vector(v4f) r = null;
-
-	for (unsigned int x = 0; x < 2; x++) {
-		for (unsigned int y = 0; y < 2; y++) {
-			for (unsigned int z = 0; z < 2; z++) {
-				v4f point = m4f_transform(invvp, make_v4f(
-					2.0f * x - 1.0f,
-					2.0f * y - 1.0f,
-					2.0f * z - 1.0f,
-					1.0f));
-				vector_push(r, make_v4f(point.x / point.w, point.y / point.w, point.z / point.w, 1.0f));
-			}
-		}
-	}
-
-	return r;
 }
