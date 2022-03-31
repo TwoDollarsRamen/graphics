@@ -4,8 +4,6 @@
 
 #include "mesh.h"
 
-#define els_per_vert 8
-
 #pragma pack(push, 1)
 struct vertex {
 	v3f position, normal, tangent, binormal;
@@ -35,6 +33,10 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 	u32 vertex_count = 0;
 	u32 index_count = 0;
 
+	/* When parsed from the Wavefront file, the mesh is indexed with separate
+	 * indices for the position, normal and UV. We can't render like this, so
+	 * it must be processed into a single buffer of vertices with indices to
+	 * go along with it. Here, the model's AABB is also updated if necessary. */
 	for (u32 i = 0; i < vector_count(omesh->vertices); i++) {
 		bool new = true;
 
@@ -45,7 +47,6 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 		if (pos.x < model->aabb.min.x) { model->aabb.min.x = pos.x; }
 		if (pos.y < model->aabb.min.y) { model->aabb.min.y = pos.y; }
 		if (pos.z < model->aabb.min.z) { model->aabb.min.z = pos.z; }
-
 		if (pos.x > model->aabb.max.x) { model->aabb.max.x = pos.x; }
 		if (pos.y > model->aabb.max.y) { model->aabb.max.y = pos.y; }
 		if (pos.z > model->aabb.max.z) { model->aabb.max.z = pos.z; }
@@ -109,6 +110,7 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 		verts[indices[i + 2]].binormal = binormal;
 	}
 
+	/* Create the vertex buffer and send the vertices to the GPU. */
 	init_vb(&mesh->vb, vb_static | vb_tris);
 	bind_vb_for_edit(&mesh->vb);
 	push_vertices(&mesh->vb, verts, vertex_count * sizeof(struct vertex));
@@ -120,6 +122,7 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 	configure_vb(&mesh->vb, 4, 3, sizeof(struct vertex), offsetof(struct vertex, binormal)); /* binormal (vec3) */
 	bind_vb_for_edit(null);
 
+	/* No longer needed. */
 	free(verts);
 	free(indices);
 
@@ -164,6 +167,7 @@ struct model* new_model_from_obj(struct obj_model* omodel) {
 		.max = { -INFINITY, -INFINITY, -INFINITY }
 	};
 
+	/* Initiate preprocessing. */
 	if (omodel->has_root_mesh) {	
 		struct mesh mesh = { 0 };
 		vector_push(model->meshes, mesh);
@@ -177,8 +181,6 @@ struct model* new_model_from_obj(struct obj_model* omodel) {
 
 		process_mesh(model, vector_end(model->meshes), omodel, omodel->meshes + i);
 	}
-
-	printf("Processed model.\n");
 
 	return model;
 }
@@ -196,6 +198,9 @@ void free_model(struct model* model) {
 }
 
 void draw_model(struct model* model, struct shader* shader) {
+	/* Apply material to the shader and draw the vertex buffer in
+	 * each mesh inside the model. */
+
 	for (u32 i = 0; i < vector_count(model->meshes); i++) {
 		struct mesh* mesh = model->meshes + i;
 

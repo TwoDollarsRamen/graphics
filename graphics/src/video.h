@@ -31,7 +31,6 @@ void shader_set_b(const struct shader* shader, const char* name, const bool v);
 void shader_set_v2f(const struct shader* shader, const char* name, const v2f v);
 void shader_set_v3f(const struct shader* shader, const char* name, const v3f v);
 void shader_set_v4f(const struct shader* shader, const char* name, const v4f v);
-void shader_set_m3f(const struct shader* shader, const char* name, const m3f v);
 void shader_set_m4f(const struct shader* shader, const char* name, const m4f v);
 
 enum {

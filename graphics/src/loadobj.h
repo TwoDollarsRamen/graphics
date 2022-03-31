@@ -28,9 +28,15 @@ struct obj_material {
 struct obj_mesh {
 	vector(struct obj_vertex) vertices;
 
+	/* Key into the `materials' table in the
+	 * `obj_model' struct. */
 	char* material_name;
 };
 
+/* An intermediate format between the raw
+ * text and an actual mesh that can be drawn
+ * to the screen. Further pre-processing is done
+ * in the `process_mesh' function in `mesh.c'. */
 struct obj_model {
 	bool has_root_mesh;
 	struct obj_mesh root_mesh;

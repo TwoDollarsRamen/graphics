@@ -340,15 +340,15 @@ void camera_look(GLFWwindow* window, f64 x, f64 y) {
 
 	camera->front = v3f_normalised(
 		make_v3f(
-			cos(torad(camera->yaw)) * cos(torad(camera->pitch)),
-			sin(torad(camera->pitch)),
-			sin(torad(camera->yaw)) * cos(torad(camera->pitch))
+			cos(toradf(camera->yaw)) * cos(toradf(camera->pitch)),
+			sin(toradf(camera->pitch)),
+			sin(toradf(camera->yaw)) * cos(toradf(camera->pitch))
 		)
 	);
 }
 
 vector(v4f) get_frustum_corners(m4f proj, m4f view) {
-	const m4f invvp = m4f_inverse(m4f_mul(proj, view));
+	const m4f invvp = m4f_invert(m4f_mul(proj, view));
 
 	vector(v4f) r = null;
 

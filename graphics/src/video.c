@@ -242,13 +242,6 @@ void shader_set_v4f(const struct shader* shader, const char* name, const v4f v) 
 	glUniform4f(location, v.x, v.y, v.z, v.w);
 }
 
-void shader_set_m3f(const struct shader* shader, const char* name, const m3f v) {
-	if (shader->panic) { return; }
-
-	u32 location = glGetUniformLocation(shader->id, name);
-	glUniformMatrix3fv(location, 1, GL_FALSE, (f32*)v.m);
-}
-
 void shader_set_m4f(const struct shader* shader, const char* name, const m4f v) {
 	if (shader->panic) { return; }
 
@@ -369,8 +362,6 @@ void init_texture(struct texture* texture, const char* path) {
 	texture->height = h;
 
 	free(src);
-
-	printf("Loaded texture `%s'.\n", path);
 }
 
 void deinit_texture(struct texture* texture) {

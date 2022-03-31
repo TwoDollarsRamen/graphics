@@ -19,6 +19,11 @@ static bool is_digit(char c) {
 }
 
 const char* parse_float(const char* start, f32* out) {
+	/* This is longer than a single call to `strtod` because it must
+	 * find the length of the float so that the functions that come
+	 * after it might know how much to advance by. We return a pointer
+	 * to the character after the number. */
+
 	const char* c = start;
 
 	if (*c == '-') {
@@ -61,6 +66,12 @@ static v2f parse_v2(const char* start) {
 	return r;
 }
 
+/* Parse vertex indices from the format: 
+ *
+ * position/UV/normal
+ *
+ * Indices other than those are not supported and
+ * are simply ignored. */
 static struct obj_vertex parse_vertex(struct obj_mesh* mesh, const char* start) {
 	char* mod = copy_string(start);
 
@@ -104,22 +115,28 @@ static void parse_face(struct obj_mesh* mesh, vector(struct obj_vertex)* verts, 
 	char* save = mod;
 	char* token;
 
-	/* This is rather stupid and slow. Fix. */
-
 	vector(char*) tokens = null;
 
+	/* Split by space. */
 	while ((token = strtok_r(save, " ", &save))) {
 		vector_push(tokens, copy_string(token));
 	}
 
-	vector_push(*verts, parse_vertex(mesh, tokens[0]));
-	vector_push(*verts, parse_vertex(mesh, tokens[1]));
-	vector_push(*verts, parse_vertex(mesh, tokens[2]));
-
-	if (vector_count(tokens) > 3) {
+	if (vector_count(tokens) == 3) {
+		/* The face is already a triangle. */
 		vector_push(*verts, parse_vertex(mesh, tokens[0]));
+		vector_push(*verts, parse_vertex(mesh, tokens[1]));
 		vector_push(*verts, parse_vertex(mesh, tokens[2]));
-		vector_push(*verts, parse_vertex(mesh, tokens[3]));
+	} else {
+		/* The face is not a triangle; Use a trangle fan to
+		 * triangulate it. This would probably not work if the
+		 * face has a hole in it. Too bad. It seems to work fine
+		 * for most meshes. */
+		for (u32 i = 0; i < vector_count(tokens) - 1; i++) {
+			vector_push(*verts, parse_vertex(mesh, tokens[0]));
+			vector_push(*verts, parse_vertex(mesh, tokens[i]));
+			vector_push(*verts, parse_vertex(mesh, tokens[i + 1]));
+		}
 	}
 
 	for (u32 i = 0; i < vector_count(tokens); i++) {
@@ -140,6 +157,10 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 
 	char* line = malloc(256);
 
+	/* The current material. This is set whenever the line
+	 * starts with `newmtl'. If this is null, no material
+	 * attributes will be set and the attributes listed in the
+	 * MTL file will be effectively ignored. */
 	struct obj_material* cur = null;
 
 #define read_path(p_, o_) \
@@ -208,6 +229,14 @@ bool load_obj(const char* filename, struct obj_model* model) {
 
 	char* line = malloc(256);
 
+	/* The current mesh to add to. It uses a `root mesh' to mean
+	 * a mesh that doesn't belong to an object. This is because
+	 * some Wavefront exporters (like the one in Autodesk Maya)
+	 * don't split meshes into separate objects if there's only
+	 * one. Some also simply combine the entire model into a single
+	 * mesh not contained to an object.
+	 *
+	 * This value is overridden every time a line begins with an `o'. */
 	struct obj_mesh* current_mesh = &model->root_mesh;
 
 	while (fgets(line, 256, file)) {
@@ -218,9 +247,12 @@ bool load_obj(const char* filename, struct obj_model* model) {
 			line[line_len - 1] = '\0';
 		}
 
-		if (memcmp(line, "usemtl", 6) == 0) {
+		if (memcmp(line, "usemtl", 6) == 0) { /* Material. */
 			current_mesh->material_name = copy_string(line + 7);
 		} else if (memcmp(line, "mtllib", 6) == 0) {
+			/* Load an MTL file and parse the materials contained
+			 * within. */
+
 			char* mtl_name = copy_string(line + 7);
 			char* mtl_path = malloc(256);
 
@@ -234,33 +266,33 @@ bool load_obj(const char* filename, struct obj_model* model) {
 		} else {
 			switch (line[0]) {
 				case 'o':
+					/* Start a new object. */
 					vector_push(model->meshes, (struct obj_mesh) { 0 });
 					current_mesh = vector_end(model->meshes);
 					break;
 				case 'v':
 					switch (line[1]) {
-						case 't':
+						case 't': /* Texture coordinate. */
 							vector_push(model->uvs, parse_v2(line + 3));
 							break;
-						case 'n':
+						case 'n': /* Vertex normal. */
 							vector_push(model->normals, v3f_normalised(parse_v3(line + 3)));
 							break;
 						case ' ':
 						case '\t':
+							/* Vertex position. */
 							vector_push(model->positions, parse_v3(line + 2));
 							break;
 						default: break;
 					}
 					break;
-				case 'f':
+				case 'f': /* A face. */
 					parse_face(current_mesh, &current_mesh->vertices, line + 2);
 					break;
 				default: break;
 			}
 		}
 	}
-
-	printf("Loaded Wavefront model.\n");
 
 	model->has_root_mesh = vector_count(model->root_mesh.vertices) > 0;
 

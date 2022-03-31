@@ -5,6 +5,17 @@
 
 #define null ((void*)0x0)
 
+#if defined(__clang__) || defined(__gcc__)
+	#define force_inline __attribute__((always_inline)) inline
+	#define dont_inline __attribute__((noinline))
+#elif defined(_MSC_VER)
+	#define force_inline __forceinline
+	#define dont_inline __declspec(noinline)
+#else
+	#define force_inline static inline
+	#define dont_inline
+#endif
+
 #define maximum(a_, b_) ((a_) > (b_) ? (a_) : (b_))
 #define minimum(a_, b_) ((a_) < (b_) ? (a_) : (b_))
 
