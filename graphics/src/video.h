@@ -69,6 +69,8 @@ struct texture {
 };
 
 void init_texture(struct texture* texture, const char* path);
+void init_texture_from_memory(struct texture* texture, void* data, u32 w, u32 h, u32 cc);
+void update_texture_contents(struct texture* texture, void* data, u32 w, u32 h, u32 cc);
 void deinit_texture(struct texture* texture);
 void bind_texture(const struct texture* texture, u32 unit);
 

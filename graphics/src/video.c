@@ -346,6 +346,12 @@ void init_texture(struct texture* texture, const char* path) {
 		return;
 	}
 
+	init_texture_from_memory(texture, src, w, h, n);
+
+	free(src);
+}
+
+void init_texture_from_memory(struct texture* texture, void* data, u32 w, u32 h, u32 cc) {
 	glGenTextures(1, &texture->id);
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 
@@ -356,12 +362,18 @@ void init_texture(struct texture* texture, const char* path) {
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		w, h, 0, GL_RGBA,
-		GL_UNSIGNED_BYTE, src);
+		GL_UNSIGNED_BYTE, data);
 
 	texture->width = w;
 	texture->height = h;
+}
 
-	free(src);
+void update_texture_contents(struct texture* texture, void* data, u32 w, u32 h, u32 cc) {
+	glBindTexture(GL_TEXTURE_2D, texture->id);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+		w, h, 0, GL_RGBA,
+		GL_UNSIGNED_BYTE, data);
 }
 
 void deinit_texture(struct texture* texture) {

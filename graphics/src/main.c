@@ -7,10 +7,10 @@
 #include "common.h"
 #include "loadobj.h"
 #include "mesh.h"
+#include "renderer.h"
+#include "table.h"
 #include "vector.h"
 #include "video.h"
-#include "table.h"
-#include "renderer.h"
 
 void show_loading_screen(v2i screen_size) {
 	struct texture image;
@@ -130,7 +130,10 @@ i32 main() {
 
 	load_obj("res/soulspear.obj", &model);
 	struct model* soulspear = new_model_from_obj(&model);
+	struct model* soulspear2 = new_model_from_obj(&model);
 	soulspear->transform = m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f));
+	soulspear2->transform = m4f_translate(m4f_identity(), make_v3f(2.5f, 1.0f, 3.0f));
+	soulspear2->meshes[0].ambient = make_v3f(50.0f, 50.0f, 50.0f);
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
@@ -143,6 +146,7 @@ i32 main() {
 	vector_push(renderer->postprocessors, antialias_shader);
 	vector_push(renderer->drawlist, monkey);
 	vector_push(renderer->drawlist, soulspear);
+	vector_push(renderer->drawlist, soulspear2);
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
 		.ambient = { 0 },
