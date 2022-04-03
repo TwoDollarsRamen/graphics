@@ -6,7 +6,7 @@
 
 #pragma pack(push, 1)
 struct vertex {
-	v3f position, normal, tangent, binormal;
+	v3f position, normal, tangent, bitangent;
 	v2f uv;
 };
 #pragma pack(pop)
@@ -71,7 +71,7 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 		}
 	}
 
-	/* Calculate tangents and binormals */
+	/* Calculate tangents and bitangents */
 	for (u32 i = 0; i < index_count; i += 3) {
 		v3f pos1 = verts[indices[i + 0]].position;
 		v3f pos2 = verts[indices[i + 1]].position;
@@ -95,7 +95,7 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 			.z = f * (delta_uv_2.y * edge_1.z - delta_uv_1.y * edge_2.z)
 		};
 
-		v3f binormal = {
+		v3f bitangent = {
 			.x = f * (-delta_uv_2.x * edge_1.x + delta_uv_1.x * edge_2.x),
 			.y = f * (-delta_uv_2.x * edge_1.y + delta_uv_1.x * edge_2.y),
 			.z = f * (-delta_uv_2.x * edge_1.z + delta_uv_1.x * edge_2.z)
@@ -105,9 +105,9 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 		verts[indices[i + 1]].tangent = tangent;
 		verts[indices[i + 2]].tangent = tangent;
 
-		verts[indices[i + 0]].binormal = binormal;
-		verts[indices[i + 1]].binormal = binormal;
-		verts[indices[i + 2]].binormal = binormal;
+		verts[indices[i + 0]].bitangent = bitangent;
+		verts[indices[i + 1]].bitangent = bitangent;
+		verts[indices[i + 2]].bitangent = bitangent;
 	}
 
 	/* Create the vertex buffer and send the vertices to the GPU. */
@@ -119,7 +119,7 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 	configure_vb(&mesh->vb, 1, 2, sizeof(struct vertex), offsetof(struct vertex, uv)); /* uv (vec2) */
 	configure_vb(&mesh->vb, 2, 3, sizeof(struct vertex), offsetof(struct vertex, normal)); /* normal (vec3) */
 	configure_vb(&mesh->vb, 3, 3, sizeof(struct vertex), offsetof(struct vertex, tangent)); /* tangent (vec3) */
-	configure_vb(&mesh->vb, 4, 3, sizeof(struct vertex), offsetof(struct vertex, binormal)); /* binormal (vec3) */
+	configure_vb(&mesh->vb, 4, 3, sizeof(struct vertex), offsetof(struct vertex, bitangent)); /* bitangent (vec3) */
 	bind_vb_for_edit(null);
 
 	/* No longer needed. */
