@@ -47,14 +47,14 @@ void show_loading_screen(v2i screen_size) {
 	bind_texture(&image, 0);
 	shader_set_i(&shader, "t", 0);
 
-	shader_set_m4f(&shader, "camera", m4f_orth(0.0f, screen_size.x, screen_size.y, 0.0f, -1.0f, 1.0f));
+	shader_set_m4f(&shader, "camera", m4f_orth(0.0f, (f32)screen_size.x, (f32)screen_size.y, 0.0f, -1.0f, 1.0f));
 	shader_set_m4f(&shader, "transform",
 		m4f_mul(
 			m4f_translate(m4f_identity(), make_v3f(
 				((f32)screen_size.x / 2.0f),
 				((f32)screen_size.y / 2.0f), 0.0f
 			)),
-			m4f_scale(m4f_identity(), make_v3f(image.width, image.height, 0.0f))
+			m4f_scale(m4f_identity(), make_v3f((f32)image.width, (f32)image.height, 0.0f))
 			)
 		);
 

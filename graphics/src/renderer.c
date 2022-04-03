@@ -287,19 +287,19 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 void update_camera(GLFWwindow* window, struct camera* camera, f64 ts) {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		camera->position = v3f_add(camera->position, v3f_scale(camera->front, camera->speed * ts));
+		camera->position = v3f_add(camera->position, v3f_scale(camera->front, camera->speed * (f32)ts));
 	}
 	
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		camera->position = v3f_sub(camera->position, v3f_scale(camera->front, camera->speed * ts));
+		camera->position = v3f_sub(camera->position, v3f_scale(camera->front, camera->speed * (f32)ts));
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		camera->position = v3f_sub(camera->position, v3f_scale(v3f_normalised(v3f_cross(camera->front, camera->up)), camera->speed * ts));
+		camera->position = v3f_sub(camera->position, v3f_scale(v3f_normalised(v3f_cross(camera->front, camera->up)), camera->speed * (f32)ts));
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		camera->position = v3f_add(camera->position, v3f_scale(v3f_normalised(v3f_cross(camera->front, camera->up)), camera->speed * ts));
+		camera->position = v3f_add(camera->position, v3f_scale(v3f_normalised(v3f_cross(camera->front, camera->up)), camera->speed * (f32)ts));
 	}
 }
 
@@ -321,12 +321,12 @@ void camera_look(GLFWwindow* window, f64 x, f64 y) {
 		camera->first_mouse = false;
 	}
 
-	float xoffset = x - camera->last_x;
-	float yoffset = camera->last_y - y;
-	camera->last_x = x;
-	camera->last_y = y;
+	f32 xoffset = (f32)x - camera->last_x;
+	f32 yoffset = camera->last_y - (f32)y;
+	camera->last_x = (f32)x;
+	camera->last_y = (f32)y;
 
-	float sensitivity = 0.1f;
+	f32 sensitivity = 0.1f;
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
 
@@ -343,9 +343,9 @@ void camera_look(GLFWwindow* window, f64 x, f64 y) {
 
 	camera->front = v3f_normalised(
 		make_v3f(
-			cos(toradf(camera->yaw)) * cos(toradf(camera->pitch)),
-			sin(toradf(camera->pitch)),
-			sin(toradf(camera->yaw)) * cos(toradf(camera->pitch))
+			cosf(toradf(camera->yaw)) * cosf(toradf(camera->pitch)),
+			sinf(toradf(camera->pitch)),
+			sinf(toradf(camera->yaw)) * cosf(toradf(camera->pitch))
 		)
 	);
 }

@@ -4,8 +4,8 @@
 
 #include <math.h>
 
-#define pif 3.14159265358f
-#define pid 3.14159265358979323846
+#define pi_f 3.14159265358f
+#define pi_d 3.14159265358979323846
 
 f64 todegd(f64 rad);
 f64 toradd(f64 deg);
@@ -99,7 +99,7 @@ force_inline v2i v2i_div(v2i a, v2i b) {
 	return (v2i) { a.x / b.x, a.y / b.y };
 }
 
-force_inline v2i v2i_scale(v2i v, f32 s) {
+force_inline v2i v2i_scale(v2i v, i32 s) {
 	return (v2i) { v.x * s, v.y * s };
 }
 
