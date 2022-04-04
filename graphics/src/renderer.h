@@ -35,8 +35,8 @@ struct light {
 };
 
 struct shader_config {
-	struct shader lit;
-	struct shader shadowmap;
+	struct shader* lit;
+	struct shader* shadowmap;
 };
 
 struct renderer {
@@ -54,7 +54,7 @@ struct renderer {
 	struct render_target scene_fb;
 	struct render_target fb0, fb1; /* Ping-pong framebuffers, for post-processing. */
 
-	vector(struct shader) postprocessors;
+	vector(struct shader*) postprocessors;
 };
 
 struct renderer* new_renderer(struct shader_config config);

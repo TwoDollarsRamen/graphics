@@ -144,7 +144,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 			clear_depth_map(&renderer->shadowmap);
 
-			struct shader* s = &renderer->shaders.shadowmap;
+			struct shader* s = renderer->shaders.shadowmap;
 			bind_shader(s);
 
 			shader_set_m4f(s, "light_matrix", light_matrix);
@@ -172,7 +172,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
 		struct model* model = *model_ptr;
 
-		struct shader* s = &renderer->shaders.lit;
+		struct shader* s = renderer->shaders.lit;
 
 		bind_shader(s);
 
@@ -249,7 +249,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		struct render_target* last_target = &renderer->fb0;
 
 		for (u32 i = 0; i < vector_count(renderer->postprocessors); i++) {
-			struct shader* shader = renderer->postprocessors + i;
+			struct shader* shader = renderer->postprocessors[i];
 
 			struct render_target* target;
 			if (i == vector_count(renderer->postprocessors) - 1) {

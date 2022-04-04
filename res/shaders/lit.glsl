@@ -168,7 +168,6 @@ void main() {
 	}
 
 	color = vec4(lighting_result, 1.0);
-	//color = vec4(fs_in.tbn[1], 1.0);
 }
 
 #end FRAGMENT

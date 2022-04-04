@@ -18,11 +18,15 @@ struct shader {
 	bool panic;
 
 	u32 id;
+
+	u64 mod_time;
+	char* filename;
 };
 
-void init_shader(struct shader* shader, const char* source, const char* name);
-void init_shader_from_file(struct shader* shader, const char* filename);
-void deinit_shader(struct shader* shader);
+struct shader* new_shader(const char* source, const char* name);
+struct shader* new_shader_from_file(const char* filename);
+void shader_reload(struct shader* shader);
+void free_shader(struct shader* shader);
 void bind_shader(const struct shader* shader);
 void shader_set_f(const struct shader* shader, const char* name, const f32 v);
 void shader_set_i(const struct shader* shader, const char* name, const i32 v);

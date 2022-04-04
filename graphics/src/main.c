@@ -14,12 +14,11 @@
 
 void show_loading_screen(v2i screen_size) {
 	struct texture image;
-	struct shader shader;
 	glClearColor(0.0705882352941f, 0.0823529411765f, 0.262745098039f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	init_texture(&image, "res/textures/loading.png");
-	init_shader_from_file(&shader, "res/shaders/loading.glsl");
+	struct shader* shader = new_shader_from_file("res/shaders/loading.glsl");
 
 	struct vertex_buffer vb;
 
@@ -43,12 +42,12 @@ void show_loading_screen(v2i screen_size) {
 	configure_vb(&vb, 1, 2, 4 * sizeof(f32), 8); /* uv (vec2) */
 	bind_vb_for_edit(null);
 
-	bind_shader(&shader);
+	bind_shader(shader);
 	bind_texture(&image, 0);
-	shader_set_i(&shader, "t", 0);
+	shader_set_i(shader, "t", 0);
 
-	shader_set_m4f(&shader, "camera", m4f_orth(0.0f, (f32)screen_size.x, (f32)screen_size.y, 0.0f, -1.0f, 1.0f));
-	shader_set_m4f(&shader, "transform",
+	shader_set_m4f(shader, "camera", m4f_orth(0.0f, (f32)screen_size.x, (f32)screen_size.y, 0.0f, -1.0f, 1.0f));
+	shader_set_m4f(shader, "transform",
 		m4f_mul(
 			m4f_translate(m4f_identity(), make_v3f(
 				((f32)screen_size.x / 2.0f),
@@ -60,12 +59,12 @@ void show_loading_screen(v2i screen_size) {
 
 	bind_vb_for_draw(&vb);
 	draw_vb(&vb);
-
+	
 	deinit_texture(&image);
-	deinit_shader(&shader);
+	free_shader(shader);
 	deinit_vb(&vb);
 
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+	glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
 }
 
 i32 main() {
@@ -100,28 +99,28 @@ i32 main() {
 	glfwSetCursorPosCallback(window, camera_look);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	struct shader invert_shader = { 0 };
-	struct shader toon_shader = { 0 };
-	struct shader crt_shader = { 0 };
-	struct shader tonemap_shader = { 0 };
-	struct shader antialias_shader = { 0 };
-	struct shader blur_shader = { 0 };
-	struct shader ca_shader = { 0 };
-	struct shader bright_extract_shader = { 0 };
-	struct shader bloom_shader = { 0 };
+	struct shader* invert_shader = { 0 };
+	struct shader* toon_shader = { 0 };
+	struct shader* crt_shader = { 0 };
+	struct shader* tonemap_shader = { 0 };
+	struct shader* antialias_shader = { 0 };
+	struct shader* blur_shader = { 0 };
+	struct shader* ca_shader = { 0 };
+	struct shader* bright_extract_shader = { 0 };
+	struct shader* bloom_shader = { 0 };
 
 	struct shader_config shaders = { 0 };
-	init_shader_from_file(&shaders.lit, "res/shaders/lit.glsl");
-	init_shader_from_file(&shaders.shadowmap, "res/shaders/shadowmap.glsl");
-	init_shader_from_file(&invert_shader, "res/shaders/invert.glsl");
-	init_shader_from_file(&toon_shader, "res/shaders/toon.glsl");
-	init_shader_from_file(&crt_shader, "res/shaders/crt.glsl");
-	init_shader_from_file(&tonemap_shader, "res/shaders/tonemap.glsl");
-	init_shader_from_file(&antialias_shader, "res/shaders/antialias.glsl");
-	init_shader_from_file(&blur_shader, "res/shaders/blur.glsl");
-	init_shader_from_file(&ca_shader, "res/shaders/ca.glsl");
-	init_shader_from_file(&bright_extract_shader, "res/shaders/bright_extract.glsl");
-	init_shader_from_file(&bloom_shader, "res/shaders/bloom.glsl");
+	shaders.lit           = new_shader_from_file("res/shaders/lit.glsl");
+	shaders.shadowmap     = new_shader_from_file("res/shaders/shadowmap.glsl");
+	invert_shader         = new_shader_from_file("res/shaders/invert.glsl");
+	toon_shader           = new_shader_from_file("res/shaders/toon.glsl");
+	crt_shader            = new_shader_from_file("res/shaders/crt.glsl");
+	tonemap_shader        = new_shader_from_file("res/shaders/tonemap.glsl");
+	antialias_shader      = new_shader_from_file("res/shaders/antialias.glsl");
+	blur_shader           = new_shader_from_file("res/shaders/blur.glsl");
+	ca_shader             = new_shader_from_file("res/shaders/ca.glsl");
+	bright_extract_shader = new_shader_from_file("res/shaders/bright_extract.glsl");
+	bloom_shader          = new_shader_from_file("res/shaders/bloom.glsl");
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
@@ -137,16 +136,19 @@ i32 main() {
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
+
 	vector_push(renderer->postprocessors, bright_extract_shader);
 	vector_push(renderer->postprocessors, blur_shader);
 	vector_push(renderer->postprocessors, blur_shader);
 	vector_push(renderer->postprocessors, bloom_shader);
-//	vector_push(renderer->postprocessors, ca_shader);
+	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
+
 	vector_push(renderer->drawlist, monkey);
 	vector_push(renderer->drawlist, soulspear);
 	vector_push(renderer->drawlist, soulspear2);
+
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
 		.ambient = { 0 },
@@ -189,6 +191,18 @@ i32 main() {
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
+		shader_reload(shaders.lit);
+		shader_reload(shaders.shadowmap);
+		shader_reload(invert_shader);
+		shader_reload(toon_shader);
+		shader_reload(crt_shader);
+		shader_reload(tonemap_shader);
+		shader_reload(antialias_shader);
+		shader_reload(blur_shader);
+		shader_reload(ca_shader);
+		shader_reload(bright_extract_shader);
+		shader_reload(bloom_shader);
+
 		clear_render_target(null);
 
 		update_camera(window, &camera, ts);
@@ -205,17 +219,17 @@ i32 main() {
 	free_model(monkey);
 	free_model(soulspear);
 
-	deinit_shader(&shaders.lit);
-	deinit_shader(&shaders.shadowmap);
-	deinit_shader(&invert_shader);
-	deinit_shader(&toon_shader);
-	deinit_shader(&crt_shader);
-	deinit_shader(&tonemap_shader);
-	deinit_shader(&antialias_shader);
-	deinit_shader(&blur_shader);
-	deinit_shader(&ca_shader);
-	deinit_shader(&bright_extract_shader);
-	deinit_shader(&bloom_shader);
+	free_shader(shaders.lit);
+	free_shader(shaders.shadowmap);
+	free_shader(invert_shader);
+	free_shader(toon_shader);
+	free_shader(crt_shader);
+	free_shader(tonemap_shader);
+	free_shader(antialias_shader);
+	free_shader(blur_shader);
+	free_shader(ca_shader);
+	free_shader(bright_extract_shader);
+	free_shader(bloom_shader);
 
 	free_renderer(renderer);
 
@@ -305,6 +319,32 @@ char* get_file_path(const char* name) {
 	}
 
 	return r;
+}
+
+u64 file_mod_time(const char* name) {
+	HANDLE file = CreateFileA(name, GENERIC_READ, 0, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null);
+
+	if (file == INVALID_HANDLE_VALUE) {
+		return 0;
+	}
+
+	FILETIME ft;
+
+	if (!GetFileTime(file, null, null, &ft)) {
+		return 0;
+	}
+
+	CloseHandle(file);
+
+	LARGE_INTEGER date, adjust;
+	date.HighPart = ft.dwHighDateTime;
+	date.LowPart = ft.dwLowDateTime;
+
+	adjust.QuadPart = 11644473600000 * 10000;
+
+	date.QuadPart -= adjust.QuadPart;
+
+	return date.QuadPart / 10000000;
 }
 
 #else

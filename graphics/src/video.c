@@ -35,9 +35,7 @@ void disable_cull_face() {
 	glDisable(GL_CULL_FACE);
 }
 
-void init_shader(struct shader* shader, const char* source, const char* name) {
-	shader->panic = false;
-
+static bool init_shader(struct shader* shader, const char* source, const char* name) {
 	const u32 source_len = (u32)strlen(source);
 
 	char* vertex_source = malloc(source_len);
@@ -63,28 +61,22 @@ void init_shader(struct shader* shader, const char* source, const char* name) {
 
 			if (strstr(line, "#begin VERTEX")) {
 				adding_to = 0;
-			}
-			else if (strstr(line, "#begin FRAGMENT")) {
+			} else if (strstr(line, "#begin FRAGMENT")) {
 				adding_to = 1;
-			}
-			else if (strstr(line, "#begin GEOMETRY")) {
+			} else if (strstr(line, "#begin GEOMETRY")) {
 				adding_to = 2;
 				has_geometry = true;
-			}
-			else if (strstr(line, "#end VERTEX") ||
+			} else if (strstr(line, "#end VERTEX") ||
 				strstr(line, "#end FRAGMENT") ||
 				strstr(line, "#end GEOMETRY")) {
 				adding_to = -1;
-			}
-			else if (adding_to == 0) {
+			} else if (adding_to == 0) {
 				strcat(vertex_source, line);
 				strcat(vertex_source, "\n");
-			}
-			else if (adding_to == 1) {
+			} else if (adding_to == 1) {
 				strcat(fragment_source, line);
 				strcat(fragment_source, "\n");
-			}
-			else if (adding_to == 2) {
+			} else if (adding_to == 2) {
 				strcat(geometry_source, line);
 				strcat(geometry_source, "\n");
 			}
@@ -174,19 +166,65 @@ void init_shader(struct shader* shader, const char* source, const char* name) {
 	free(geometry_source);
 
 	shader->id = id;
+
+	return !shader->panic;
 }
 
-void init_shader_from_file(struct shader* shader, const char* filename) {
-	char* buffer;
-	read_raw(filename, (u8**)&buffer, null, true);
+struct shader* new_shader(const char* source, const char* name) {
+	struct shader* shader = calloc(1, sizeof(struct shader));
 
-	init_shader(shader, buffer, filename);
+	init_shader(shader, source, name);
 
-	free(buffer);
+	return shader;
 }
 
-void deinit_shader(struct shader* shader) {
+struct shader* new_shader_from_file(const char* filename) {
+	char* buffer = null;
+	u64 mod_time = 0;
+	if (read_raw(filename, (u8**)&buffer, null, true)) {
+		mod_time = file_mod_time(filename);
+	}
+
+	struct shader* s = new_shader(buffer, filename);
+	s->mod_time = mod_time;
+	s->filename = copy_string(filename);
+
+	if (buffer) { free(buffer); }
+
+	return s;
+}
+
+void shader_reload(struct shader* shader) {
+	if (!shader->filename) { return; }
+
+	u64 mod_time = file_mod_time(shader->filename);
+	if (mod_time > shader->mod_time) {
+		char* buffer = null;
+		u64 mod_time = 0;
+		if (read_raw(shader->filename, (u8**)&buffer, null, true)) {
+			mod_time = file_mod_time(shader->filename);
+		}
+
+		u32 old_id = shader->id;
+		if (init_shader(shader, buffer, shader->filename)) {
+			glDeleteProgram(old_id);
+		} else {
+			glDeleteProgram(shader->id);
+			shader->id = old_id;
+		}
+
+		shader->mod_time = mod_time;
+
+		if (buffer) { free(buffer); }
+	}
+}
+
+void free_shader(struct shader* shader) {
 	glDeleteProgram(shader->id);
+
+	if (shader->filename) { free(shader->filename); }
+
+	free(shader);
 }
 
 void bind_shader(const struct shader* shader) {
