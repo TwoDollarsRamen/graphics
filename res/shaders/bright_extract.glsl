@@ -36,7 +36,7 @@ void main() {
 
 	float pixel_brightness = dot(texture_color.rgb, vec3(0.2126, 0.7152, 0.0722));
 
-	if (pixel_brightness > 0.7) {
+	if (pixel_brightness > 2.0) {
 		out_color = texture_color;
 	} else {
 		out_color = vec4(0.0, 0.0, 0.0, 1.0);

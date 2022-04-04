@@ -186,7 +186,7 @@ i32 main() {
 			.ambient = { 0 },
 			.specular = { 1.0f, 1.0f, 1.0f },
 			.diffuse = { 1.0f, 1.0f, 1.0f },
-			.intensity = 0.5f,
+			.intensity = 1.0f,
 			.as.directional = {
 				.direction = { 0.3f, 1.0f, 0.3f },
 				.cast_shadows = true

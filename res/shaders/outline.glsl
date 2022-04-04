@@ -53,7 +53,7 @@ void main() {
 	vec3 diff2 = n4 - n3;
 
 	float edge_normal = sqrt(dot(diff1, diff1) + dot(diff2, diff2));
-	edge_normal = edge_normal > 0.07 ? 1.0 : 0.0;
+	edge_normal = edge_normal > 0.3 ? 1.0 : 0.0;
 
 	color = texture(input_texture, fs_in.uv) - vec4(vec3(edge_normal), 0.0);
 }
