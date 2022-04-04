@@ -127,10 +127,10 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	};
 
 	/* Generate an AABB of the scene so that the shadow map can get a tight fit. */
-	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
-		struct model* model = *model_ptr;
+	for (struct drawlist_item* vector_iter(renderer->drawlist, item)) {
+		struct model* model = item->model;
 
-		struct aabb model_aabb = transform_aabb(model->aabb, model->transform);
+		struct aabb model_aabb = transform_aabb(model->aabb, item->transform);
 
 		scene_aabb.min.x = minimum(scene_aabb.min.x, model_aabb.min.x);
 		scene_aabb.min.y = minimum(scene_aabb.min.y, model_aabb.min.y);
@@ -153,10 +153,10 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 			shader_set_m4f(s, "light_matrix", light_matrix);
 
-			for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
-				struct model* model = *model_ptr;
+			for (struct drawlist_item* vector_iter(renderer->drawlist, item)) {
+				struct model* model = item->model;
 	
-				shader_set_m4f(s, "transform", model->transform);
+				shader_set_m4f(s, "transform", item->transform);
 
 				draw_model(model, s);
 			}
@@ -174,8 +174,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	}
 
 	u32 i = 0;
-	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
-		struct model* model = *model_ptr;
+	for (struct drawlist_item* vector_iter(renderer->drawlist, item)) {
+		struct model* model = item->model;
 
 		struct shader* s = renderer->shaders.lit;
 
@@ -184,7 +184,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		shader_set_m4f(s, "projection", camera_proj);
 		shader_set_m4f(s, "view", camera_view);
 
-		shader_set_m4f(s, "transform", model->transform);
+		shader_set_m4f(s, "transform", item->transform);
 
 		shader_set_v3f(s, "world.camera_pos", camera->position);
 		shader_set_v3f(s, "world.ambient", renderer->ambient);
@@ -308,8 +308,8 @@ void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i m
 	shader_set_m4f(s, "view", camera_view);
 
 	u32 i = 0;
-	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
-		struct model* model = *model_ptr;
+	for (struct drawlist_item* vector_iter(renderer->drawlist, item)) {
+		struct model* model = item->model;
 
 		u32 id = i + 1;
 
@@ -317,7 +317,7 @@ void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i m
 		i32 g = (id & 0x0000FF00) >> 8;
 		i32 b = (id & 0x00FF0000) >> 16;
 
-		shader_set_m4f(s, "transform", model->transform);
+		shader_set_m4f(s, "transform", item->transform);
 		shader_set_v3f(s, "color",
 			make_v3f((f32)r / 255.0f, (f32)g / 255.0f, (f32)b / 2.0f));
 
@@ -331,10 +331,14 @@ void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i m
 	u8 data[3];
 	glReadPixels(mouse_pos.x, screen_h - mouse_pos.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, &data);
 
-	renderer->selected =
-		data[0] + 
-		data[1] * 256 +
-		data[2] * 256 * 256;
+	if (data[0] == 0 && data[1] == 0 && data[2] == 0) {
+		renderer->selected = 0;
+	} else {
+		renderer->selected =
+			data[0] + 
+			data[1] * 256 +
+			data[2] * 256 * 256;
+	}
 
 	glReadBuffer(GL_NONE);
 

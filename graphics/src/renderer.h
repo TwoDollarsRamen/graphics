@@ -40,8 +40,13 @@ struct shader_config {
 	struct shader* pick;
 };
 
+struct drawlist_item {
+	struct model* model;
+	m4f transform;
+};
+
 struct renderer {
-	vector(struct model*) drawlist;
+	vector(struct drawlist_item) drawlist;
 	vector(struct light) lights;
 
 	struct depth_map shadowmap;

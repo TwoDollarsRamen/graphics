@@ -160,8 +160,6 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 struct model* new_model_from_obj(struct obj_model* omodel) {
 	struct model* model = calloc(1, sizeof(struct model));
 
-	model->transform = m4f_identity();
-
 	model->aabb = (struct aabb) {
 		.min = { INFINITY, INFINITY, INFINITY },
 		.max = { -INFINITY, -INFINITY, -INFINITY }

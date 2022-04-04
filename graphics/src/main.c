@@ -64,7 +64,7 @@ void show_loading_screen(v2i screen_size) {
 	free_shader(shader);
 	deinit_vb(&vb);
 
-	glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
+	glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 }
 
 i32 main() {
@@ -130,7 +130,6 @@ i32 main() {
 
 	load_obj("res/soulspear.obj", &model);
 	struct model* soulspear = new_model_from_obj(&model);
-	soulspear->transform = m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f));
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
@@ -143,8 +142,8 @@ i32 main() {
 	vector_push(renderer->postprocessors, tonemap_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
 
-	vector_push(renderer->drawlist, monkey);
-	vector_push(renderer->drawlist, soulspear);
+	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_identity() }));
+	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f)) }));
 
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
@@ -219,11 +218,45 @@ i32 main() {
 			renderer_mouse_pick(renderer, &camera, make_v2i((i32)x, (i32)y));
 		}
 
+		if (!holding_mouse && renderer->selected) {
+			struct drawlist_item* item = &renderer->drawlist[renderer->selected - 1];
+
+			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+				item->transform = m4f_translate(item->transform,
+					v3f_scale(make_v3f(0.0f, 0.0f, 3.0f), (f32)ts));
+			}
+			
+			if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+				item->transform = m4f_translate(item->transform,
+					v3f_scale(make_v3f(0.0f, 0.0f, -3.0f), (f32)ts));
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+				item->transform = m4f_translate(item->transform,
+					v3f_scale(make_v3f(3.0f, 0.0f, 0.0f), (f32)ts));
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+				item->transform = m4f_translate(item->transform,
+					v3f_scale(make_v3f(-3.0f, 0.0f, 0.0f), (f32)ts));
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+				item->transform = m4f_translate(item->transform,
+					v3f_scale(make_v3f(0.0f, 3.0f, 0.0f), (f32)ts));
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+				item->transform = m4f_translate(item->transform,
+					v3f_scale(make_v3f(0.0f, -3.0f, 0.0f), (f32)ts));
+			}
+		} else {
+			update_camera(window, &camera, ts);
+		}
+
 		camera.look_enable = holding_mouse;
 
 		clear_render_target(null);
-
-		update_camera(window, &camera, ts);
 
 		renderer_draw(renderer, &camera);
 

@@ -27,8 +27,6 @@ struct mesh {
 struct model {
 	vector(struct mesh) meshes;
 
-	m4f transform;
-
 	struct aabb aabb;
 };
 
