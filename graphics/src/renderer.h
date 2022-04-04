@@ -38,6 +38,7 @@ struct shader_config {
 	struct shader* lit;
 	struct shader* shadowmap;
 	struct shader* pick;
+	struct shader* normal;
 };
 
 struct drawlist_item {
@@ -60,6 +61,7 @@ struct renderer {
 
 	struct vertex_buffer fullscreen_quad;
 	struct render_target postprocess_ignore_fb;
+	struct render_target normal_fb;
 	struct render_target scene_fb;
 	struct render_target fb0, fb1; /* Ping-pong framebuffers, for post-processing. */
 

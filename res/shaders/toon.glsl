@@ -27,6 +27,8 @@ in VS_OUT {
 
 out vec4 color;
 
+uniform sampler2D original_texture;
+uniform sampler2D ignore;
 uniform sampler2D input_texture;
 uniform vec2 screen_size;
 
@@ -50,7 +52,7 @@ vec3 palette[] = {
 };
 
 void main() {
-	vec4 tc = texture(input_texture, fs_in.uv);
+	vec4 tc = texture(input_texture, fs_in.uv) - texture(ignore, fs_in.uv);
 
 	float smallest = 100000000000000000000000000.0;
 	int index = 0;
@@ -64,7 +66,7 @@ void main() {
 		}
 	}
 
-	color = vec4(palette[index], tc.a);
+	color = vec4(palette[index], tc.a) + texture(ignore, fs_in.uv) * texture(original_texture, fs_in.uv);
 }
 
 #end FRAGMENT

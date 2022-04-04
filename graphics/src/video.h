@@ -92,6 +92,7 @@ void deinit_render_target(struct render_target* target);
 void resize_render_target(struct render_target* target, u32 width, u32 height);
 void bind_render_target(struct render_target* target);
 void bind_render_target_output(struct render_target* target, u32 unit);
+void bind_render_target_output_depth(struct render_target* target, u32 unit);
 
 struct depth_map {
 	u32 id;

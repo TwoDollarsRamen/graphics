@@ -512,6 +512,16 @@ void bind_render_target_output(struct render_target* target, u32 unit) {
 	glBindTexture(GL_TEXTURE_2D, target->output);
 }
 
+void bind_render_target_output_depth(struct render_target* target, u32 unit) {
+	if (!target) {
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return;
+	}
+
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glBindTexture(GL_TEXTURE_2D, target->depth);
+}
+
 void init_depth_map(struct depth_map* dm, u32 width, u32 height) {
 	glGenFramebuffers(1, &dm->id);
 

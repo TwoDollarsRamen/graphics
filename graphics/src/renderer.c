@@ -15,6 +15,7 @@ struct renderer* new_renderer(struct shader_config config) {
 	renderer->ambient = make_v3f(1.0, 1.0, 1.0);
 	renderer->ambient_intensity = 0.1f;
 
+	init_render_target(&renderer->normal_fb, screen_w, screen_h);
 	init_render_target(&renderer->postprocess_ignore_fb, screen_w, screen_h);
 	init_render_target(&renderer->scene_fb, screen_w, screen_h);
 	init_render_target(&renderer->fb0, screen_w, screen_h);
@@ -171,6 +172,26 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		}
 	}
 
+	/* Normal buffer */
+	clear_render_target(&renderer->normal_fb);
+
+	struct shader* s = renderer->shaders.normal;
+
+	bind_shader(s);
+
+	shader_set_m4f(s, "projection", camera_proj);
+	shader_set_m4f(s, "view", camera_view);
+
+	for (struct drawlist_item* vector_iter(renderer->drawlist, item)) {
+		struct model* model = item->model;
+
+		shader_set_m4f(s, "transform", item->transform);
+
+		draw_model(model, s);
+	}
+
+	clear_render_target(&renderer->postprocess_ignore_fb);
+
 	if (vector_count(renderer->postprocessors) > 0) {
 		if (renderer->selected) {
 			/* Draw only the selected object into a framebuffer
@@ -182,8 +203,6 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			struct shader* s = renderer->shaders.pick;
 			bind_shader(s);
 
-			clear_render_target(&renderer->postprocess_ignore_fb);
-
 			shader_set_m4f(s, "projection", camera_proj);
 			shader_set_m4f(s, "view", camera_view);
 			shader_set_m4f(s, "transform", item->transform);
@@ -194,6 +213,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		}
 
 		clear_render_target(&renderer->scene_fb);
+	} else {
+		bind_render_target(null);
 	}
 
 	u32 i = 0;
@@ -308,6 +329,10 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			shader_set_i(shader, "original_texture", 1);
 			bind_render_target_output(&renderer->postprocess_ignore_fb, 2);
 			shader_set_i(shader, "ignore", 2);
+			bind_render_target_output_depth(&renderer->scene_fb, 3);
+			shader_set_i(shader, "depth", 3);
+			bind_render_target_output(&renderer->normal_fb, 4);
+			shader_set_i(shader, "normals", 4);
 			shader_set_v2f(shader, "screen_size", make_v2f(screen_w, screen_h));
 
 			bind_vb_for_draw(&renderer->fullscreen_quad);

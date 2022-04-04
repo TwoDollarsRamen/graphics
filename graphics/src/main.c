@@ -108,11 +108,13 @@ i32 main() {
 	struct shader* ca_shader = { 0 };
 	struct shader* bright_extract_shader = { 0 };
 	struct shader* bloom_shader = { 0 };
+	struct shader* outline_shader = { 0 };
 
 	struct shader_config shaders = { 0 };
 	shaders.lit           = new_shader_from_file("res/shaders/lit.glsl");
 	shaders.shadowmap     = new_shader_from_file("res/shaders/shadowmap.glsl");
 	shaders.pick          = new_shader_from_file("res/shaders/pick.glsl");
+	shaders.normal        = new_shader_from_file("res/shaders/normal.glsl");
 	invert_shader         = new_shader_from_file("res/shaders/invert.glsl");
 	toon_shader           = new_shader_from_file("res/shaders/toon.glsl");
 	crt_shader            = new_shader_from_file("res/shaders/crt.glsl");
@@ -122,6 +124,7 @@ i32 main() {
 	ca_shader             = new_shader_from_file("res/shaders/ca.glsl");
 	bright_extract_shader = new_shader_from_file("res/shaders/bright_extract.glsl");
 	bloom_shader          = new_shader_from_file("res/shaders/bloom.glsl");
+	outline_shader        = new_shader_from_file("res/shaders/outline.glsl");
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
@@ -144,7 +147,9 @@ i32 main() {
 	vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
+	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
+	/* vector_push(renderer->postprocessors, toon_shader); */
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_identity() }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f)) }));
@@ -198,6 +203,7 @@ i32 main() {
 		shader_reload(shaders.lit);
 		shader_reload(shaders.shadowmap);
 		shader_reload(shaders.pick);
+		shader_reload(shaders.normal);
 		shader_reload(invert_shader);
 		shader_reload(toon_shader);
 		shader_reload(crt_shader);
@@ -207,6 +213,7 @@ i32 main() {
 		shader_reload(ca_shader);
 		shader_reload(bright_extract_shader);
 		shader_reload(bloom_shader);
+		shader_reload(outline_shader);
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {	
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -281,6 +288,7 @@ i32 main() {
 	free_shader(shaders.lit);
 	free_shader(shaders.shadowmap);
 	free_shader(shaders.pick);
+	free_shader(shaders.normal);
 	free_shader(invert_shader);
 	free_shader(toon_shader);
 	free_shader(crt_shader);
@@ -290,6 +298,7 @@ i32 main() {
 	free_shader(ca_shader);
 	free_shader(bright_extract_shader);
 	free_shader(bloom_shader);
+	free_shader(outline_shader);
 
 	free_renderer(renderer);
 
