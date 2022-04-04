@@ -37,6 +37,7 @@ struct light {
 struct shader_config {
 	struct shader* lit;
 	struct shader* shadowmap;
+	struct shader* pick;
 };
 
 struct renderer {
@@ -50,6 +51,8 @@ struct renderer {
 	v3f ambient;
 	float ambient_intensity;
 
+	u32 selected;
+
 	struct vertex_buffer fullscreen_quad;
 	struct render_target scene_fb;
 	struct render_target fb0, fb1; /* Ping-pong framebuffers, for post-processing. */
@@ -60,6 +63,7 @@ struct renderer {
 struct renderer* new_renderer(struct shader_config config);
 void free_renderer(struct renderer* renderer);
 void renderer_draw(struct renderer* renderer, struct camera* camera);
+void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i mouse_pos);
 
 struct camera {
 	f32 speed;

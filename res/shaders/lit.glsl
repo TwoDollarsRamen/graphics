@@ -61,6 +61,8 @@ uniform sampler2D normal_map;
 uniform bool use_shadows = false;
 uniform sampler2D shadowmap;
 
+uniform bool selected = false;
+
 #define max_point_lights 32
 #define max_directional_lights 3
 
@@ -196,7 +198,11 @@ void main() {
 			specular_map_color.rgb, diffuse_map_color.rgb);
 	}
 
-	color = vec4(lighting_result, 1.0);
+	if (selected) {
+		color = 1.0 + vec4(lighting_result, 1.0);
+	} else {
+		color = vec4(lighting_result, 1.0);
+	}
 }
 
 #end FRAGMENT

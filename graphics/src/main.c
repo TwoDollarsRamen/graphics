@@ -112,6 +112,7 @@ i32 main() {
 	struct shader_config shaders = { 0 };
 	shaders.lit           = new_shader_from_file("res/shaders/lit.glsl");
 	shaders.shadowmap     = new_shader_from_file("res/shaders/shadowmap.glsl");
+	shaders.pick          = new_shader_from_file("res/shaders/pick.glsl");
 	invert_shader         = new_shader_from_file("res/shaders/invert.glsl");
 	toon_shader           = new_shader_from_file("res/shaders/toon.glsl");
 	crt_shader            = new_shader_from_file("res/shaders/crt.glsl");
@@ -129,10 +130,7 @@ i32 main() {
 
 	load_obj("res/soulspear.obj", &model);
 	struct model* soulspear = new_model_from_obj(&model);
-	struct model* soulspear2 = new_model_from_obj(&model);
 	soulspear->transform = m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f));
-	soulspear2->transform = m4f_translate(m4f_identity(), make_v3f(2.5f, 1.0f, 3.0f));
-	soulspear2->meshes[0].ambient = make_v3f(50.0f, 50.0f, 50.0f);
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
@@ -147,7 +145,6 @@ i32 main() {
 
 	vector_push(renderer->drawlist, monkey);
 	vector_push(renderer->drawlist, soulspear);
-	vector_push(renderer->drawlist, soulspear2);
 
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
@@ -194,6 +191,7 @@ i32 main() {
 
 		shader_reload(shaders.lit);
 		shader_reload(shaders.shadowmap);
+		shader_reload(shaders.pick);
 		shader_reload(invert_shader);
 		shader_reload(toon_shader);
 		shader_reload(crt_shader);
@@ -213,6 +211,12 @@ i32 main() {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			holding_mouse = true;
 			camera.first_mouse = true;
+		}
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)) {
+			f64 x, y;
+			glfwGetCursorPos(window, &x, &y);
+			renderer_mouse_pick(renderer, &camera, make_v2i((i32)x, (i32)y));
 		}
 
 		camera.look_enable = holding_mouse;
@@ -235,6 +239,7 @@ i32 main() {
 
 	free_shader(shaders.lit);
 	free_shader(shaders.shadowmap);
+	free_shader(shaders.pick);
 	free_shader(invert_shader);
 	free_shader(toon_shader);
 	free_shader(crt_shader);

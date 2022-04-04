@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <glad/glad.h>
+
 #include "renderer.h"
 
 struct renderer* new_renderer(struct shader_config config) {
 	struct renderer* renderer = calloc(1, sizeof(struct renderer));
+
+	renderer->selected = 0;
 
 	renderer->shaders = config;
 
@@ -169,6 +173,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		clear_render_target(&renderer->scene_fb);
 	}
 
+	u32 i = 0;
 	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
 		struct model* model = *model_ptr;
 
@@ -184,6 +189,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		shader_set_v3f(s, "world.camera_pos", camera->position);
 		shader_set_v3f(s, "world.ambient", renderer->ambient);
 		shader_set_f(s, "world.ambient_intensity", renderer->ambient_intensity);
+
+		shader_set_b(s, "selected", renderer->selected == i + 1);
 
 		/* Apply lights */
 		u32 point_count = 0;
@@ -240,6 +247,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		shader_set_u(s, "directional_light_count", directional_count);
 
 		draw_model(model, s);
+
+		i++;
 	}
 	
 	disable_cull_face();
@@ -283,6 +292,53 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			last_target = target;
 		}
 	}
+}
+
+void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i mouse_pos) {
+	m4f camera_proj = get_camera_proj(camera, make_v2i(screen_w, screen_h));
+	m4f camera_view = get_camera_view(camera);
+
+	clear_render_target(&renderer->fb0);
+
+	struct shader* s = renderer->shaders.pick;
+
+	bind_shader(s);
+
+	shader_set_m4f(s, "projection", camera_proj);
+	shader_set_m4f(s, "view", camera_view);
+
+	u32 i = 0;
+	for (struct model** vector_iter(renderer->drawlist, model_ptr)) {
+		struct model* model = *model_ptr;
+
+		u32 id = i + 1;
+
+		i32 r = (id & 0x000000FF) >> 0;
+		i32 g = (id & 0x0000FF00) >> 8;
+		i32 b = (id & 0x00FF0000) >> 16;
+
+		shader_set_m4f(s, "transform", model->transform);
+		shader_set_v3f(s, "color",
+			make_v3f((f32)r / 255.0f, (f32)g / 255.0f, (f32)b / 2.0f));
+
+		draw_model(model, s);
+
+		i++;
+	}
+
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+	u8 data[3];
+	glReadPixels(mouse_pos.x, screen_h - mouse_pos.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, &data);
+
+	renderer->selected =
+		data[0] + 
+		data[1] * 256 +
+		data[2] * 256 * 256;
+
+	glReadBuffer(GL_NONE);
+
+	bind_render_target(null);
 }
 
 void update_camera(GLFWwindow* window, struct camera* camera, f64 ts) {
