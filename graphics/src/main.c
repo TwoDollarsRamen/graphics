@@ -147,9 +147,9 @@ i32 main() {
 	vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
+	/*vector_push(renderer->postprocessors, toon_shader);*/
 	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
-	/*vector_push(renderer->postprocessors, toon_shader);*/
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_identity() }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f)) }));
@@ -226,7 +226,7 @@ i32 main() {
 			camera.first_mouse = true;
 		}
 
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)) {
+		if (!holding_mouse && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT)) {
 			f64 x, y;
 			glfwGetCursorPos(window, &x, &y);
 			renderer_mouse_pick(renderer, &camera, make_v2i((i32)x, (i32)y));
