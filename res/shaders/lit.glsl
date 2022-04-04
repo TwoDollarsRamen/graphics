@@ -199,7 +199,7 @@ void main() {
 	}
 
 	if (selected) {
-		color = 1.0 + vec4(lighting_result, 1.0);
+		color = 0.5 + vec4(lighting_result, 1.0);
 	} else {
 		color = vec4(lighting_result, 1.0);
 	}

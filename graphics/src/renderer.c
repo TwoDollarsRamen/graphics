@@ -15,6 +15,7 @@ struct renderer* new_renderer(struct shader_config config) {
 	renderer->ambient = make_v3f(1.0, 1.0, 1.0);
 	renderer->ambient_intensity = 0.1f;
 
+	init_render_target(&renderer->postprocess_ignore_fb, screen_w, screen_h);
 	init_render_target(&renderer->scene_fb, screen_w, screen_h);
 	init_render_target(&renderer->fb0, screen_w, screen_h);
 	init_render_target(&renderer->fb1, screen_w, screen_h);
@@ -45,6 +46,8 @@ struct renderer* new_renderer(struct shader_config config) {
 }
 
 void free_renderer(struct renderer* renderer) {
+	deinit_render_target(&renderer->scene_fb);
+	deinit_render_target(&renderer->postprocess_ignore_fb);
 	deinit_render_target(&renderer->fb0);
 	deinit_render_target(&renderer->fb1);
 
@@ -169,7 +172,27 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	}
 
 	if (vector_count(renderer->postprocessors) > 0) {
-		bind_render_target(&renderer->scene_fb);
+		if (renderer->selected) {
+			/* Draw only the selected object into a framebuffer
+			 * so that the post-processing step can ignore it. */
+			struct drawlist_item* item = &renderer->drawlist[renderer->selected - 1];
+
+			struct model* model = item->model;
+
+			struct shader* s = renderer->shaders.pick;
+			bind_shader(s);
+
+			clear_render_target(&renderer->postprocess_ignore_fb);
+
+			shader_set_m4f(s, "projection", camera_proj);
+			shader_set_m4f(s, "view", camera_view);
+			shader_set_m4f(s, "transform", item->transform);
+
+			shader_set_v3f(s, "color", make_v3f(1.0f, 1.0f, 1.0f));
+
+			draw_model(model, s);
+		}
+
 		clear_render_target(&renderer->scene_fb);
 	}
 
@@ -283,6 +306,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			shader_set_i(shader, "input_texture", 0);
 			bind_render_target_output(&renderer->scene_fb, 1);
 			shader_set_i(shader, "original_texture", 1);
+			bind_render_target_output(&renderer->postprocess_ignore_fb, 2);
+			shader_set_i(shader, "ignore", 2);
 			shader_set_v2f(shader, "screen_size", make_v2f(screen_w, screen_h));
 
 			bind_vb_for_draw(&renderer->fullscreen_quad);

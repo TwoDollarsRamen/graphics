@@ -28,10 +28,11 @@ in VS_OUT {
 out vec4 out_color;
 
 uniform sampler2D input_texture;
+uniform sampler2D ignore;
 uniform vec2 screen_size;
 
 void main() {
-	vec4 texture_color = texture(input_texture, fs_in.uv);
+	vec4 texture_color = texture(input_texture, fs_in.uv) - texture(ignore, fs_in.uv);
 
 	float pixel_brightness = dot(texture_color.rgb, vec3(0.2126, 0.7152, 0.0722));
 

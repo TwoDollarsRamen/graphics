@@ -8,7 +8,6 @@ uniform mat4 projection = mat4(1.0);
 uniform mat4 view = mat4(1.0);
 uniform mat4 transform = mat4(1.0);
 
-
 void main() {
 	gl_Position = projection * view * transform * vec4(position, 1.0);
 }
