@@ -324,6 +324,9 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 				bind_render_target_output(last_target, 0);
 			}
 
+			shader_set_m4f(shader, "projection", camera_proj);
+			shader_set_m4f(shader, "view", camera_view);
+
 			shader_set_i(shader, "input_texture", 0);
 			bind_render_target_output(&renderer->scene_fb, 1);
 			shader_set_i(shader, "original_texture", 1);

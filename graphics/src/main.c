@@ -149,7 +149,7 @@ i32 main() {
 	vector_push(renderer->postprocessors, tonemap_shader);
 	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
-	/* vector_push(renderer->postprocessors, toon_shader); */
+	/*vector_push(renderer->postprocessors, toon_shader);*/
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_identity() }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f)) }));
@@ -418,6 +418,8 @@ u64 file_mod_time(const char* name) {
 
 #else
 
+#include <sys/stat.h>
+
 char* get_file_path(const char* name) {
 	char* r = realpath(name, null);
 	if (!r) { return null; }
@@ -431,6 +433,15 @@ char* get_file_path(const char* name) {
 	}
 
 	return r;
+}
+
+u64 file_mod_time(const char* name) {
+	struct stat s;
+	if (stat(name, &s) != -1) {
+		return s.st_mtime;
+	}
+
+	return 0;
 }
 
 #endif
