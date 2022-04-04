@@ -209,11 +209,11 @@ void shader_reload(struct shader* shader) {
 		if (init_shader(shader, buffer, shader->filename)) {
 			glDeleteProgram(old_id);
 		} else {
-			glDeleteProgram(shader->id);
 			shader->id = old_id;
 		}
 
 		shader->mod_time = mod_time;
+		shader->panic = false;
 
 		if (buffer) { free(buffer); }
 	}
