@@ -315,6 +315,8 @@ void camera_look(GLFWwindow* window, f64 x, f64 y) {
 	struct camera* camera = glfwGetWindowUserPointer(window);
 	if (!camera) { return; }
 
+	if (!camera->look_enable) { return; }
+
 	if (camera->first_mouse) {
 		camera->last_x = (f32)x;
 		camera->last_y = (f32)y;

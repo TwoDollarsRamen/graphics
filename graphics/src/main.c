@@ -187,6 +187,7 @@ i32 main() {
 
 	f64 ts = 0.0f;
 	f64 now = glfwGetTime(), last = glfwGetTime();
+	bool holding_mouse = true;
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -202,6 +203,19 @@ i32 main() {
 		shader_reload(ca_shader);
 		shader_reload(bright_extract_shader);
 		shader_reload(bloom_shader);
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {	
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			holding_mouse = false;
+		}
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			holding_mouse = true;
+			camera.first_mouse = true;
+		}
+
+		camera.look_enable = holding_mouse;
 
 		clear_render_target(null);
 

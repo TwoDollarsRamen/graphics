@@ -68,6 +68,7 @@ struct camera {
 	v3f front, up;
 
 	bool first_mouse;
+	bool look_enable;
 
 	f32 last_x, last_y;
 	f32 yaw, pitch;

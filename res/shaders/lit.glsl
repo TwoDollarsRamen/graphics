@@ -173,7 +173,7 @@ void main() {
 	}
 
 	vec3 view_dir = normalize(world.camera_pos - fs_in.world_pos);
-	
+
 	vec3 n = normalize(fs_in.tbn[2]);
 	if (use_normal_map) {
 		n = texture(normal_map, fs_in.uv).rgb * 2.0 - 1.0;
