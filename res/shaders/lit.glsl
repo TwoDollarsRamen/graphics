@@ -106,10 +106,23 @@ vec3 compute_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 spec
 	/* Attenuation from: https://geom.io/bakery/wiki/index.php?title=Point_Light_Attenuation
 	 *
 	 * The same attenuation model as Bakery uses. */
-	float a = 1.0 / (pow(length(light.position - fs_in.world_pos), 2.0) + 1);
+	float attenuation = 1.0 / (pow(length(light.position - fs_in.world_pos), 2.0) + 1);
 	
-	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0) * a;
-	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess) * a;
+	vec3 diffuse =
+		material.diffuse *
+		diffuse_map_color *
+		light.diffuse *
+		light.intensity *
+		max(dot(light_dir, normal), 0.0) *
+		attenuation;
+
+	vec3 specular =
+		material.specular *
+		specular_map_color *
+		light.specular *
+		light.intensity *
+		pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess)
+		* attenuation;
 
 	return diffuse + specular;
 }
@@ -118,8 +131,19 @@ vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_di
 	vec3 light_dir = normalize(light.direction);
 	vec3 reflect_dir = reflect(-light_dir, normal);
 	
-	vec3 diffuse = material.diffuse * diffuse_map_color * light.diffuse * light.intensity * max(dot(light_dir, normal), 0.0);
-	vec3 specular = material.specular * specular_map_color * light.specular * light.intensity * pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
+	vec3 diffuse =
+			material.diffuse *
+			diffuse_map_color *
+			light.diffuse *
+			light.intensity *
+			max(dot(light_dir, normal), 0.0);
+
+	vec3 specular =
+		material.specular *
+		specular_map_color *
+		light.specular *
+		light.intensity *
+		pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
 
 	/* Shadow calculation. */
 	float shadow = 0.0;
@@ -156,7 +180,12 @@ void main() {
 		n = normalize(fs_in.tbn * n);
 	}
 
-	vec3 lighting_result = diffuse_map_color.rgb * world.ambient_intensity * world.ambient * material.ambient;
+	vec3 lighting_result =
+			diffuse_map_color.rgb *
+			world.ambient_intensity *
+			world.ambient *
+			material.ambient;
+
 	for (uint i = 0; i < point_light_count; i++) {
 		lighting_result += compute_point_light(point_lights[i], n, view_dir,
 			specular_map_color.rgb, diffuse_map_color.rgb);
