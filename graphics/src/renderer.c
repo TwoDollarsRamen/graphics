@@ -320,6 +320,11 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 }
 
 void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i mouse_pos) {
+	/* Mouse picking is implemented by rendering the scene into a framebuffer,
+	 * where each object's colour represents it's ID. Then, the colour of the
+	 * pixel on the framebuffer at the mouse position is sampled and converted
+	 * back into an object ID. */
+
 	m4f camera_proj = get_camera_proj(camera, make_v2i(screen_w, screen_h));
 	m4f camera_view = get_camera_view(camera);
 

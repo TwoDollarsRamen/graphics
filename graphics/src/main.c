@@ -132,6 +132,10 @@ i32 main() {
 	struct model* soulspear = new_model_from_obj(&model);
 	deinit_obj(&model);
 
+	load_obj("res/torus.obj", &model);
+	struct model* torus = new_model_from_obj(&model);
+	deinit_obj(&model);
+
 	struct renderer* renderer = new_renderer(shaders);
 
 	vector_push(renderer->postprocessors, bright_extract_shader);
@@ -144,6 +148,9 @@ i32 main() {
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_identity() }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f)) }));
+	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(3.0f, 1.0f, 3.0f)) }));
+	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(6.0f, 1.0f, 3.0f)) }));
+	vector_push(renderer->drawlist, ((struct drawlist_item) { torus,     m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 1.0f)) }));
 
 	vector_push(renderer->lights, ((struct light) {
 		.type = light_point,
@@ -269,6 +276,7 @@ i32 main() {
 
 	free_model(monkey);
 	free_model(soulspear);
+	free_model(torus);
 
 	free_shader(shaders.lit);
 	free_shader(shaders.shadowmap);
