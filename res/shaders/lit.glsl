@@ -59,7 +59,7 @@ uniform bool use_normal_map = false;
 uniform sampler2D normal_map;
 
 uniform bool use_shadows = false;
-uniform sampler2D shadowmap;
+uniform sampler2DShadow shadowmap;
 
 uniform bool selected = false;
 
@@ -156,12 +156,11 @@ vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_di
 
 		vec3 proj_coords = fs_in.light_pos.xyz / fs_in.light_pos.w;
 		proj_coords = proj_coords * 0.5 + 0.5;
-		float closest_depth = texture(shadowmap, proj_coords.xy).r;
-		float current_depth = proj_coords.z;
-		shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+		shadow = texture(shadowmap, vec3(proj_coords.xy, proj_coords.z - bias), bias).r;
 	}
 
-	return (1.0 - shadow) * (diffuse + specular);
+	return shadow * (diffuse + specular);
 }
 
 void main() {
