@@ -1,5 +1,6 @@
-#include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -12,6 +13,8 @@
 #include "table.h"
 #include "vector.h"
 #include "video.h"
+
+vector(char) log_buffer;
 
 void show_loading_screen(v2i screen_size) {
 	struct texture image;
@@ -67,6 +70,7 @@ void show_loading_screen(v2i screen_size) {
 
 	glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 }
+
 
 i32 main() {
 	glfwInit();
@@ -151,8 +155,8 @@ i32 main() {
 	vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
-	vector_push(renderer->postprocessors, toon_shader);
-	vector_push(renderer->postprocessors, outline_shader);
+//	vector_push(renderer->postprocessors, toon_shader);
+//	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_identity() }));
@@ -197,7 +201,7 @@ i32 main() {
 		}
 	}));
 
-	struct font* arial = new_font_from_file("res/arial.ttf", 20.0f);
+	struct font* consolas = new_font_from_file("res/consolas.ttf", 14.0f);
 
 	f64 ts = 0.0f;
 	f64 now = glfwGetTime(), last = glfwGetTime();
@@ -221,6 +225,12 @@ i32 main() {
 		shader_reload(bloom_shader);
 		shader_reload(outline_shader);
 		shader_reload(sprite_shader);
+
+		if (glfwGetKey(window, GLFW_KEY_C) && vector_count(log_buffer)) {
+			/* Clear the log. */
+			log_buffer[0] = '\0';
+			vector_clear(log_buffer);
+		}
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {	
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -288,9 +298,9 @@ i32 main() {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		char buffer[256];
-		sprintf(buffer, "FPS: %g", 1.0 / ts);
-		render_text(renderer2d, arial, buffer, make_v2f(0.0f, 0.0f));
+		if (log_buffer) {
+			render_text(renderer2d, consolas, log_buffer, make_v2f(0.0f, 0.0f));
+		}
 
 		enable_depth_test();
 		glDisable(GL_BLEND);
@@ -302,7 +312,7 @@ i32 main() {
 		last = now;
 	}
 
-	free_font(arial);
+	free_font(consolas);
 
 	free_renderer(renderer);
 	free_renderer2d(renderer2d);
@@ -340,7 +350,7 @@ bool read_raw(const char* filename, u8** buf, u64* size, bool term) {
 
 	FILE* file = fopen(filename, "rb");
 	if (!file) {
-		fprintf(stderr, "Failed to fopen file %s\n", filename);
+		print_log("Failed to fopen file %s\n", filename);
 		return false;
 	}
 
@@ -351,7 +361,7 @@ bool read_raw(const char* filename, u8** buf, u64* size, bool term) {
 	*buf = malloc(file_size + (term ? 1 : 0));
 	const u64 bytes_read = fread(*buf, sizeof(char), file_size, file);
 	if (bytes_read < file_size) {
-		printf("Failed to read file: %s\n", filename);
+		print_log("Failed to read file: %s\n", filename);
 	}
 
 	if (term) {
@@ -391,6 +401,31 @@ u64 elf_hash(const u8* data, u32 size) {
 	return (hash & 0x7FFFFFFFFF);
 }
 
+void print_log(const char* fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+
+	char message[1024];
+	vsnprintf(message, 1023, fmt, args);
+
+	va_end(args);
+
+	u32 len = (u32)strlen(message);
+
+	if (vector_count(log_buffer)) {
+		*vector_end(log_buffer) = message[0];
+	}
+
+	for (u32 i = 0; i < len; i++) {
+		vector_push(log_buffer, message[i]);
+	}
+
+	if (vector_count(log_buffer)) {
+		*vector_end(log_buffer) = '\0';
+	}
+
+	printf("%s\n", message);
+}
 
 #ifdef _WIN32
 

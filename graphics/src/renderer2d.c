@@ -43,6 +43,9 @@ void renderer2d_push(struct renderer2d* self, struct quad* quad) {
 	const f32 tw = quad->rect.w / self->texture->width;
 	const f32 th = quad->rect.h / self->texture->height;
 
+	/* Vertices are transformed on the CPU instead of the shader, to avoid
+	 * having a transform matrix in an array on the shader or as a vertex
+	 * array layout, because of batching. */
 	const v4f p0 = m4f_transform(transform, make_v4f(0.0f, 0.0f, 0.0f, 1.0f));
 	const v4f p1 = m4f_transform(transform, make_v4f(1.0f, 0.0f, 0.0f, 1.0f));
 	const v4f p2 = m4f_transform(transform, make_v4f(1.0f, 1.0f, 0.0f, 1.0f));
@@ -82,14 +85,14 @@ void renderer2d_flush(struct renderer2d* self) {
 	bind_texture(self->texture, 0);
 	shader_set_i(self->shader, "image", 0);
 
+	/* Send the vertices to the GPU and draw them. */
 	bind_vb_for_edit(&self->vb);
 	update_vertices(&self->vb, self->verts, 0,
 		sizeof(struct vertex2d) * self->quad_count * renderer2d_verts_per_quad);
-	update_indices(&self->vb, self->indices, 0,
-		sizeof(struct vertex2d) * self->quad_count * renderer2d_indices_per_quad);
+	update_indices(&self->vb, self->indices, 0, self->quad_count * renderer2d_indices_per_quad);
 
 	bind_vb_for_draw(&self->vb);
-	draw_vb(&self->vb);
+	draw_vb_n(&self->vb, self->quad_count * renderer2d_indices_per_quad);
 	bind_vb_for_draw(null);
 
 	self->quad_count = 0;
@@ -117,6 +120,12 @@ struct font {
 	i32 height;
 };
 
+/* This font renderer actually supports UTF-8! This function takes a
+ * UTF-8 encoded string and gives the position in the glyph set of the
+ * character. Note that the character is not guaranteed to exist, so
+ * null text may be rendered, however the font defines that.
+ *
+ * This implementation is based on the man page for utf-8(7) */
 static const char* utf8_to_codepoint(const char* p, u32* dst) {
 	u32 res, n;
 	switch (*p & 0xf0) {
@@ -133,25 +142,21 @@ static const char* utf8_to_codepoint(const char* p, u32* dst) {
 	return p + 1;
 }
 
+/* Draw the trueype font into a bitmap and extract the glyph information
+ * from it.*/
 static struct glyph_set* load_glyph_set(struct font* font, i32 idx) {
-	i32 width, height, r, ascent, descent, linegap, scaled_ascent, i;
-	unsigned char n;
-	f32 scale, s;
-	struct glyph_set* set;
+	struct glyph_set* set = calloc(1, sizeof(struct glyph_set));
 
-	set = calloc(1, sizeof(struct glyph_set));
-
-	width = 128;
-	height = 128;
+	u32 width = 128;
+	u32 height = 128;
 
 	struct color* pixels;
-
 retry:
 	pixels = malloc(width * height * 4);
 
-	s = stbtt_ScaleForMappingEmToPixels(&font->info, 1) /
+	f32 s = stbtt_ScaleForMappingEmToPixels(&font->info, 1) /
 		stbtt_ScaleForPixelHeight(&font->info, 1);
-	r = stbtt_BakeFontBitmap(font->data, 0, font->size * s,
+	i32 r = stbtt_BakeFontBitmap(font->data, 0, font->size * s,
 			(void*)pixels, width, height, idx * 256, 256, set->glyphs);
 
 	if (r <= 0) {
@@ -161,16 +166,17 @@ retry:
 		goto retry;
 	}
 
+	i32 ascent, descent, linegap, scaled_ascent;
 	stbtt_GetFontVMetrics(&font->info, &ascent, &descent, &linegap);
-	scale = stbtt_ScaleForMappingEmToPixels(&font->info, font->size);
+	f32 scale = stbtt_ScaleForMappingEmToPixels(&font->info, font->size);
 	scaled_ascent = (i32)(ascent * scale + 0.5);
-	for (i = 0; i < 256; i++) {
+	for (u32 i = 0; i < 256; i++) {
 		set->glyphs[i].yoff += scaled_ascent;
 		set->glyphs[i].xadvance = (f32)floor(set->glyphs[i].xadvance);
 	}
 
-	for (i = width * height - 1; i >= 0; i--) {
-		n = *((u8*)pixels + i);
+	for (i32 i = width * height - 1; i >= 0; i--) {
+		unsigned char n = *((u8*)pixels + i);
 		pixels[i] = (struct color) {255, 255, 255, n};
 	}
 
@@ -182,9 +188,7 @@ retry:
 }
 
 static struct glyph_set* get_glyph_set(struct font* font, i32 code_poi32) {
-	i32 idx;
-
-	idx = (code_poi32 >> 8) % max_glyphset;
+	i32 idx = (code_poi32 >> 8) % max_glyphset;
 	if (!font->sets[idx]) {
 		font->sets[idx] = load_glyph_set(font, idx);
 	}
@@ -193,24 +197,24 @@ static struct glyph_set* get_glyph_set(struct font* font, i32 code_poi32) {
 
 
 struct font* new_font_from_file(const char* path, f32 size) {
-	struct font* font;
-	i32 r, ascent, descent, linegap;
-	f32 scale;
-
 	u64 filesize;
 
-	font = calloc(1, sizeof(struct font));
-	read_raw(path, (u8**)&font->data, &filesize, false);
+	struct font* font = calloc(1, sizeof(struct font));
+	if (!read_raw(path, (u8**)&font->data, &filesize, false)) {
+		free(font);
+		return null;
+	}
 
 	font->size = size;
 
-	r = stbtt_InitFont(&font->info, font->data, 0);
+	i32 r = stbtt_InitFont(&font->info, font->data, 0);
 	if (!r) {
 		goto fail;
 	}
 
+	i32 ascent, descent, linegap;
 	stbtt_GetFontVMetrics(&font->info, &ascent, &descent, &linegap);
-	scale = stbtt_ScaleForMappingEmToPixels(&font->info, size);
+	f32 scale = stbtt_ScaleForMappingEmToPixels(&font->info, size);
 	font->height = (i32)((ascent - descent + linegap) * scale + 0.5);
 
 	stbtt_bakedchar* g = get_glyph_set(font, '\n')->glyphs;
@@ -270,8 +274,8 @@ void render_text(struct renderer2d* renderer, struct font* font, const char* tex
 		set = get_glyph_set(font, codepoint);
 		g = &set->glyphs[codepoint & 0xff];
 
-		f32 w = g->x1 - g->x0;
-		f32 h = g->y1 - g->y0;
+		f32 w = (f32)(g->x1 - g->x0);
+		f32 h = (f32)(g->y1 - g->y0);
 
 		renderer2d_set_texture(renderer, &set->atlas);
 		

@@ -39,3 +39,5 @@ char* copy_string(const char* str);
 char* get_file_path(const char* name);
 u64 elf_hash(const u8* data, u32 size);
 u64 file_mod_time(const char* name);
+
+void print_log(const char* fmt, ...);

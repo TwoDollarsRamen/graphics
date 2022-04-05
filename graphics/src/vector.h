@@ -63,6 +63,13 @@ struct vector_header {
 
 #define vector_count(v_) ((v_) != null ? (((struct vector_header*)(v_)) - 1)->count : 0)
 
+#define vector_clear(v_) \
+	do { \
+		if (v_) { \
+			(((struct vector_header*)(v_)) - 1)->count = 0; \
+		} \
+	} while (0)
+
 #define free_vector(v_) if ((v_)) { free(((struct vector_header*)(v_)) - 1); }
 
 #define vector_start(v_) (v_)

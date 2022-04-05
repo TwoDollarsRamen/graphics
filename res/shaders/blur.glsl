@@ -33,7 +33,7 @@ uniform vec2 screen_size;
 void main() {
 	/* This is incredibly slow. It looks good, though, when done twice,
 	 * so too bad, I guess. */
-
+	
 	float blur_amt = 0.2;
 
 	vec4 accum = vec4(0.0);

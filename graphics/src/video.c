@@ -12,7 +12,7 @@
 
 void video_init() {
 	if (!gladLoadGL()) {
-		fprintf(stderr, "Failed to load OpenGL.\n");
+		print_log("Failed to load OpenGL.\n");
 		abort();
 	}
 
@@ -111,7 +111,7 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 	if (!success) {
 		char info_log[1024];
 		glGetShaderInfoLog(v, 1024, null, info_log);
-		fprintf(stderr, "Vertex shader of `%s' failed to compile with the following errors:\n%s", name,
+		print_log("Vertex shader of `%s' failed to compile with the following errors:\n%s\n", name,
 			info_log);
 		shader->panic = true;
 	}
@@ -124,7 +124,7 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 	if (!success) {
 		char info_log[1024];
 		glGetShaderInfoLog(f, 1024, null, info_log);
-		fprintf(stderr, "Fragment shader of `%s' failed to compile with the following errors:\n%s", name,
+		print_log("Fragment shader of `%s' failed to compile with the following errors:\n%s\n", name,
 			info_log);
 		shader->panic = true;
 	}
@@ -138,7 +138,7 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 		if (!success) {
 			char info_log[1024];
 			glGetShaderInfoLog(g, 1024, null, info_log);
-			fprintf(stderr, "Geometry shader of `%s' failed to compile with the following errors:\n%s", name,
+			print_log("Geometry shader of `%s' failed to compile with the following errors:\n%s\n", name,
 				info_log);
 			shader->panic = true;
 		}
@@ -157,7 +157,7 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 	if (!success) {
 		char info_log[1024];
 		glGetProgramInfoLog(id, 1024, null, info_log);
-		fprintf(stderr, "Shader `%s' failed to link with the following errors:\n%s", name,
+		print_log("Shader `%s' failed to link with the following errors:\n%s\n", name,
 			info_log);
 		shader->panic = true;
 	}
@@ -337,12 +337,11 @@ void push_indices(struct vertex_buffer* vb, u32* indices, u32 count) {
 
 	vb->index_count = count;
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(f32), indices, mode);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(u32), indices, mode);
 }
 
 void update_vertices(const struct vertex_buffer* vb, void* vertices, u64 offset, u64 size) {
-	glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(f32),
-		size, vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, offset, size, vertices);
 }
 
 void update_indices(struct vertex_buffer* vb, u32* indices, u32 offset, u32 count) {
@@ -388,7 +387,7 @@ void init_texture(struct texture* texture, const char* path) {
 	u8* src = stbi_load(path, &w, &h, &n, 4);
 
 	if (!src) {
-		fprintf(stderr, "Failed to load texture: `%s': %s\n", path, stbi_failure_reason());
+		print_log("Failed to load texture: `%s': %s\n", path, stbi_failure_reason());
 		return;
 	}
 
@@ -469,7 +468,7 @@ void init_render_target(struct render_target* target, u32 width, u32 height) {
 	target->height = height;
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		fprintf(stderr, "Failed to create render target.\n");
+		print_log("Failed to create render target.\n");
 	}
 
 	bind_render_target(null);
@@ -553,7 +552,7 @@ void init_depth_map(struct depth_map* dm, u32 width, u32 height) {
 	dm->height = height;
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		fprintf(stderr, "Failed to create depth map.\n");
+		print_log("Failed to create depth map.\n");
 	}
 
 	bind_depth_map(null);
