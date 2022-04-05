@@ -192,6 +192,8 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 			cur->diffuse = parse_v3(line + 3);
 		} else if (cur && memcmp(line, "Ks", 2) == 0) { /* Specular colour. */
 			cur->specular = parse_v3(line + 3);
+		} else if (cur && memcmp(line, "Ke", 2) == 0) { /* Emissive colour. */
+			cur->emissive = parse_v3(line + 3);
 		} else if (cur && memcmp(line, "map_Ka", 6) == 0) { /* Ambient map. */
 			read_path(cur->ambient_map_path, 7);
 		} else if (cur && memcmp(line, "map_Kd", 6) == 0) { /* Diffuse map. */

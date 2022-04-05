@@ -145,6 +145,10 @@ i32 main() {
 	load_obj("res/torus.obj", &model);
 	struct model* torus = new_model_from_obj(&model);
 	deinit_obj(&model);
+	
+	load_obj("res/simplescene.obj", &model);
+	struct model* scene = new_model_from_obj(&model);
+	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
 	struct renderer2d* renderer2d = new_renderer2d(sprite_shader);
@@ -159,7 +163,8 @@ i32 main() {
 //	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
 
-	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_identity() }));
+	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_translate(m4f_identity(), make_v3f(3.0f, 1.5f, 1.0f)) }));
+	vector_push(renderer->drawlist, ((struct drawlist_item) { scene, m4f_identity() }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f)) }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(3.0f, 1.0f, 3.0f)) }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(6.0f, 1.0f, 3.0f)) }));
@@ -170,10 +175,10 @@ i32 main() {
 		.ambient = { 0 },
 		.specular = { 1.0f, 0.0f, 0.0f },
 		.diffuse = { 1.0f, 0.0f, 0.0f },
-		.intensity = 1.0f,
+		.intensity = 10.0f,
 		.as.point = {
-			.position = { 1.0f, 0.5f, 2.0f },
-			.range = 10.0f
+			.position = { 1.0f, 0.5f, 6.0f },
+			.range = 3.0f
 		}
 	}));
 
@@ -182,7 +187,7 @@ i32 main() {
 		.ambient = { 0 },
 		.specular = { 0.0f, 1.0f, 1.0f },
 		.diffuse = { 0.0f, 1.0f, 1.0f },
-		.intensity = 1.0f,
+		.intensity = 10.0f,
 		.as.point = {
 			.position = { 0.0f, 2.0f, -3.0f },
 			.range = 10.0f
@@ -320,6 +325,7 @@ i32 main() {
 	free_model(monkey);
 	free_model(soulspear);
 	free_model(torus);
+	free_model(scene);
 
 	free_shader(shaders.lit);
 	free_shader(shaders.shadowmap);

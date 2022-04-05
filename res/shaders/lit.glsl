@@ -82,6 +82,7 @@ struct DirectionalLight {
 
 struct Material {
 	vec3 ambient, diffuse, specular;
+	vec3 emissive;
 	float shininess;
 };
 
@@ -186,7 +187,8 @@ void main() {
 			diffuse_map_color.rgb *
 			world.ambient_intensity *
 			world.ambient *
-			material.ambient;
+			material.ambient +
+			material.emissive;
 
 	for (uint i = 0; i < point_light_count; i++) {
 		lighting_result += compute_point_light(point_lights[i], n, view_dir,
