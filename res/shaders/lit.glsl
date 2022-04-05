@@ -157,7 +157,7 @@ vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_di
 		vec3 proj_coords = fs_in.light_pos.xyz / fs_in.light_pos.w;
 		proj_coords = proj_coords * 0.5 + 0.5;
 
-		shadow = texture(shadowmap, vec3(proj_coords.xy, proj_coords.z - bias), bias).r;
+		shadow = texture(shadowmap, vec3(proj_coords.xy, proj_coords.z - bias)).r;
 	}
 
 	return shadow * (diffuse + specular);
