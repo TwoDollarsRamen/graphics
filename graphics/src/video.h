@@ -13,6 +13,8 @@ void video_clear();
 
 void enable_cull_face();
 void disable_cull_face();
+void enable_depth_test();
+void disable_depth_test();
 
 struct shader {
 	bool panic;

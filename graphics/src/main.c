@@ -8,6 +8,7 @@
 #include "loadobj.h"
 #include "mesh.h"
 #include "renderer.h"
+#include "renderer2d.h"
 #include "table.h"
 #include "vector.h"
 #include "video.h"
@@ -109,6 +110,7 @@ i32 main() {
 	struct shader* bright_extract_shader = { 0 };
 	struct shader* bloom_shader = { 0 };
 	struct shader* outline_shader = { 0 };
+	struct shader* sprite_shader = { 0 };
 
 	struct shader_config shaders = { 0 };
 	shaders.lit           = new_shader_from_file("res/shaders/lit.glsl");
@@ -125,6 +127,7 @@ i32 main() {
 	bright_extract_shader = new_shader_from_file("res/shaders/bright_extract.glsl");
 	bloom_shader          = new_shader_from_file("res/shaders/bloom.glsl");
 	outline_shader        = new_shader_from_file("res/shaders/outline.glsl");
+	sprite_shader         = new_shader_from_file("res/shaders/sprite.glsl");
 
 	struct obj_model model = { 0 };
 	load_obj("res/monkey.obj", &model);
@@ -140,6 +143,7 @@ i32 main() {
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
+	struct renderer2d* renderer2d = new_renderer2d(sprite_shader);
 
 	vector_push(renderer->postprocessors, bright_extract_shader);
 	vector_push(renderer->postprocessors, blur_shader);
@@ -147,7 +151,7 @@ i32 main() {
 	vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
-	/*vector_push(renderer->postprocessors, toon_shader);*/
+	vector_push(renderer->postprocessors, toon_shader);
 	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
 
@@ -193,6 +197,8 @@ i32 main() {
 		}
 	}));
 
+	struct font* arial = new_font_from_file("res/arial.ttf", 20.0f);
+
 	f64 ts = 0.0f;
 	f64 now = glfwGetTime(), last = glfwGetTime();
 	bool holding_mouse = true;
@@ -214,6 +220,7 @@ i32 main() {
 		shader_reload(bright_extract_shader);
 		shader_reload(bloom_shader);
 		shader_reload(outline_shader);
+		shader_reload(sprite_shader);
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {	
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -270,9 +277,23 @@ i32 main() {
 
 		camera.look_enable = holding_mouse;
 
+		/* 3-D pass. */
 		clear_render_target(null);
-
 		renderer_draw(renderer, &camera);
+
+		/* 2-D pass. */
+		bind_render_target(null);
+		disable_cull_face();
+		disable_depth_test();
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		char buffer[256];
+		sprintf(buffer, "FPS: %g", 1.0 / ts);
+		render_text(renderer2d, arial, buffer, make_v2f(0.0f, 0.0f));
+
+		enable_depth_test();
+		glDisable(GL_BLEND);
 
 		glfwSwapBuffers(window);
 
@@ -280,6 +301,11 @@ i32 main() {
 		ts = now - last;
 		last = now;
 	}
+
+	free_font(arial);
+
+	free_renderer(renderer);
+	free_renderer2d(renderer2d);
 
 	free_model(monkey);
 	free_model(soulspear);
@@ -299,8 +325,7 @@ i32 main() {
 	free_shader(bright_extract_shader);
 	free_shader(bloom_shader);
 	free_shader(outline_shader);
-
-	free_renderer(renderer);
+	free_shader(sprite_shader);
 
 	glfwDestroyWindow(window);
 

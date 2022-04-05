@@ -35,6 +35,14 @@ void disable_cull_face() {
 	glDisable(GL_CULL_FACE);
 }
 
+void enable_depth_test() {
+	glEnable(GL_DEPTH_TEST);
+}
+
+void disable_depth_test() {
+	glDisable(GL_DEPTH_TEST);
+}
+
 static bool init_shader(struct shader* shader, const char* source, const char* name) {
 	const u32 source_len = (u32)strlen(source);
 

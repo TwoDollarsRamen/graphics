@@ -32,6 +32,11 @@ uniform sampler2D input_texture;
 uniform vec2 screen_size;
 
 void main() {
+	/* This outline shader is based on: https://roystan.net/articles/outline-shader.html
+	 *
+	 * It works by detecting a difference between normals in a specified rectangle
+	 * in the normal buffer. */
+
 	float scale = 1.0;
 
 	vec2 texel_size = 1.0 / screen_size;
