@@ -10,8 +10,8 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd textures\containera.png
-map_Ks textures\containers.png
+map_Kd textures/containera.png
+map_Ks textures/containers.png
 
 newmtl Stone
 Ns 250.000000
@@ -22,5 +22,5 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd textures\walla.jpg
-bump textures\walln.png
+map_Kd textures/walla.jpg
+bump textures/walln.png

@@ -162,6 +162,7 @@ i32 main() {
 //	vector_push(renderer->postprocessors, toon_shader);
 //	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
+	//vector_push(renderer->postprocessors, crt_shader);
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_translate(m4f_identity(), make_v3f(3.0f, 1.5f, 1.0f)) }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { scene, m4f_identity() }));
