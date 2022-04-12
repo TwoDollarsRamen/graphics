@@ -48,7 +48,22 @@ struct drawlist_item {
 	m4f transform;
 };
 
-/* This renderer is a bit weird */
+/* The renderer does things in this order:
+ *  - Draw a shadowmap if there's a directional light in the
+ *   `lights' vector that has `cast_shadows' set to true.
+ *  - Draw the geometry buffer containing the screen-space
+ *    normals and positions.
+ *  - Draw and blur an ambient occlusion buffer.
+ *  - Draw the main scene colours.
+ *  - Run through the post-processing shaders one by one. If
+ *    one of them is null, the framebuffers will be swapped around
+ *    such that the "original" scene texture is the result of the
+ *    last shader. This is useful to discard the original scene
+ *    and overwrite it with more data.
+ *
+ * For the time being, it's a forward renderer. The geometry
+ * buffer is used for ambient occlusion, however I'd like to use
+ * it for deferred rendering in the near future. */
 struct renderer {
 	vector(struct drawlist_item) drawlist;
 	vector(struct light) lights;
