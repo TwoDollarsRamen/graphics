@@ -153,6 +153,7 @@ i32 main() {
 	deinit_obj(&model);
 
 	struct renderer* renderer = new_renderer(shaders);
+	renderer->ambient_intensity = 0.5f;
 	struct renderer2d* renderer2d = new_renderer2d(sprite_shader);
 
 	vector_push(renderer->postprocessors, bright_extract_shader);

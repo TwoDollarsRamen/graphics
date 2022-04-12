@@ -465,8 +465,9 @@ void bind_texture(const struct texture* texture, u32 unit) {
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 }
 
-void init_render_target(struct render_target* target, u32 color_attachment_count, u32 width, u32 height) {
+void init_render_target(struct render_target* target, u32 color_attachment_count, bool has_depth, u32 width, u32 height) {
 	target->color_count = color_attachment_count;
+	target->has_depth = has_depth;
 
 	glGenFramebuffers(1, &target->id);
 
@@ -491,17 +492,19 @@ void init_render_target(struct render_target* target, u32 color_attachment_count
 
 	glDrawBuffers(color_attachment_count, attachments);
 	
-	glGenTextures(1, &target->depth);
-	glBindTexture(GL_TEXTURE_2D, target->depth);
+	if (has_depth) {
+		glGenTextures(1, &target->depth);
+		glBindTexture(GL_TEXTURE_2D, target->depth);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, null);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, null);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, target->depth, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, target->depth, 0);
+	}
 
 	target->width = width;
 	target->height = height;
@@ -561,7 +564,7 @@ void bind_render_target_output(struct render_target* target, u32 attachment, u32
 }
 
 void bind_render_target_output_depth(struct render_target* target, u32 unit) {
-	if (!target) {
+	if (!target || !target->has_depth) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return;
 	}

@@ -85,13 +85,15 @@ struct render_target {
 	u32 id;
 	u32 width, height;
 
+	bool has_depth;
+
 	u32 color_count;
 	u32 output[16];
 	u32 depth;
 };
 
 void clear_render_target(struct render_target* target);
-void init_render_target(struct render_target* target, u32 color_attachment_count, u32 width, u32 height);
+void init_render_target(struct render_target* target, u32 color_attachment_count, bool has_depth, u32 width, u32 height);
 void deinit_render_target(struct render_target* target);
 void resize_render_target(struct render_target* target, u32 width, u32 height);
 void bind_render_target(struct render_target* target);

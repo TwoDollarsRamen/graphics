@@ -38,7 +38,7 @@ uniform sampler2D normals;
 uniform mat4 projection;
 
 int kernel_size = 64;
-float radius = 0.5;
+float radius = 1.0;
 float bias = 0.025;
 
 void main() {
@@ -72,10 +72,7 @@ void main() {
 
 	occlusion = 1.0 - (occlusion / kernel_size);
 
-	//occlusion = 1.0;
-
 	color = vec4(vec3(occlusion), 1.0);
-	color = vec4(1.0);
 }
 
 #end FRAGMENT

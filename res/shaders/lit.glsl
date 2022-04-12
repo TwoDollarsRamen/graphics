@@ -61,6 +61,10 @@ uniform sampler2D normal_map;
 uniform bool use_shadows = false;
 uniform sampler2DShadow shadowmap;
 
+uniform sampler2D ao;
+
+uniform vec2 screen_size;
+
 uniform bool selected = false;
 
 #define max_point_lights 32
@@ -182,12 +186,21 @@ void main() {
 		n = normalize(fs_in.tbn * n);
 	}
 
+	/* Really SSAO should be for deferred lighting.
+	 *
+	 * This is a bit of a hack. */
+	vec2 ao_texcoord = gl_FragCoord.xy / screen_size;
+	vec4 ambient_occlusion = texture(ao, ao_texcoord);
+
 	vec3 lighting_result =
 			diffuse_map_color.rgb *
 			world.ambient_intensity *
 			world.ambient *
-			material.ambient +
-			material.emissive;
+			material.ambient;
+
+	lighting_result *= ambient_occlusion.rgb;
+
+	lighting_result += material.emissive;
 
 	for (uint i = 0; i < point_light_count; i++) {
 		lighting_result += compute_point_light(point_lights[i], n, view_dir,

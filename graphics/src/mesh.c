@@ -205,20 +205,20 @@ void draw_model(struct model* model, struct shader* shader) {
 
 		shader_set_b(shader, "use_diffuse_map", mesh->use_diffuse_map);
 		if (mesh->use_diffuse_map) {
-			bind_texture(&model->meshes[i].diffuse_map, 1);
-			shader_set_i(shader, "diffuse_map", 1);
+			bind_texture(&model->meshes[i].diffuse_map, 2);
+			shader_set_i(shader, "diffuse_map", 2);
 		}
 
 		shader_set_b(shader, "use_specular_map", mesh->use_specular_map);
 		if (mesh->use_specular_map) {
-			bind_texture(&model->meshes[i].specular_map, 2);
-			shader_set_i(shader, "specular_map", 2);
+			bind_texture(&model->meshes[i].specular_map, 3);
+			shader_set_i(shader, "specular_map", 3);
 		}
 
 		shader_set_b(shader, "use_normal_map", mesh->use_normal_map);
 		if (mesh->use_normal_map) {
-			bind_texture(&model->meshes[i].normal_map, 3);
-			shader_set_i(shader, "normal_map", 3);
+			bind_texture(&model->meshes[i].normal_map, 4);
+			shader_set_i(shader, "normal_map", 4);
 		}
 
 		shader_set_v3f(shader, "material.ambient",   mesh->ambient);

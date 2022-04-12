@@ -39,11 +39,11 @@ struct renderer* new_renderer(struct shader_config config) {
 	renderer->fb0      = calloc(1, sizeof(struct render_target));
 	renderer->fb1      = calloc(1, sizeof(struct render_target));
 
-	init_render_target(&renderer->gbuffer,               2, screen_w, screen_h);
-	init_render_target(&renderer->postprocess_ignore_fb, 1, screen_w, screen_h);
-	init_render_target( renderer->scene_fb,              1, screen_w, screen_h);
-	init_render_target( renderer->fb0,                   1, screen_w, screen_h);
-	init_render_target( renderer->fb1,                   1, screen_w, screen_h);
+	init_render_target(&renderer->gbuffer,               2, true,  screen_w, screen_h);
+	init_render_target(&renderer->postprocess_ignore_fb, 1, false, screen_w, screen_h);
+	init_render_target( renderer->scene_fb,              1, true,  screen_w, screen_h);
+	init_render_target( renderer->fb0,                   1, false, screen_w, screen_h);
+	init_render_target( renderer->fb1,                   1, false, screen_w, screen_h);
 
 	init_depth_map(&renderer->shadowmap, 1024, 1024);
 
@@ -77,6 +77,10 @@ void free_renderer(struct renderer* renderer) {
 	deinit_render_target(&renderer->postprocess_ignore_fb);
 	deinit_render_target(renderer->fb0);
 	deinit_render_target(renderer->fb1);
+
+	free(renderer->fb0);
+	free(renderer->fb1);
+	free(renderer->scene_fb);
 
 	free(renderer);
 }
@@ -217,6 +221,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	}
 
 	/* Ambient occlusion */
+	disable_cull_face();
+
 	clear_render_target(renderer->fb0);
 
 	s = renderer->shaders.ao;
@@ -228,8 +234,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	bind_render_target_output(&renderer->gbuffer, 1, 1);
 	shader_set_i(s, "positions", 1);
 
-	bind_texture(&renderer->ao_noise, 3);
-	shader_set_i(s, "noise", 3);
+	bind_texture(&renderer->ao_noise, 2);
+	shader_set_i(s, "noise", 2);
 
 	shader_set_m4f(s, "projection", camera_proj);
 	shader_set_m4f(s, "view", camera_view);
@@ -245,6 +251,23 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	bind_vb_for_draw(&renderer->fullscreen_quad);
 	draw_vb(&renderer->fullscreen_quad);
 	bind_vb_for_draw(null);
+
+	/* Blur the ambient occlusion */
+	clear_render_target(renderer->fb1);
+
+	s = renderer->shaders.ao_blur;
+	bind_shader(s);
+
+	bind_render_target_output(renderer->fb0, 0, 0);
+	shader_set_i(s, "input_texture", 0);
+
+	shader_set_v2f(s, "screen_size", make_v2f(screen_w, screen_h));
+
+	bind_vb_for_draw(&renderer->fullscreen_quad);
+	draw_vb(&renderer->fullscreen_quad);
+	bind_vb_for_draw(null);
+
+	enable_cull_face();
 
 	clear_render_target(&renderer->postprocess_ignore_fb);
 
@@ -342,6 +365,11 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			shader_set_i(s, "shadowmap", 0);
 			shader_set_m4f(s, "light_matrix", light_matrix);
 		}
+
+		bind_render_target_output(renderer->fb1, 0, 1);
+		shader_set_i(s, "ao", 1);
+
+		shader_set_v2f(s, "screen_size", make_v2f(screen_w, screen_h));;
 
 		shader_set_u(s, "point_light_count", point_count);
 		shader_set_u(s, "directional_light_count", directional_count);
