@@ -19,9 +19,9 @@ struct renderer* new_renderer(struct shader_config config) {
 
 	for (u32 i = 0; i < 64; i++) {
 		v3f sample = {
-			random_float(0.0f, 1.0f) * 2.0f - 1.0f,
-			random_float(0.0f, 1.0f) * 2.0f - 1.0f,
-			random_float(0.0f, 1.0f)
+			random_float(-1.0f, 1.0f),
+			random_float(-1.0f, 1.0f),
+			random_float(-1.0f, 1.0f)
 		};
 
 		sample = v3f_normalised(sample);

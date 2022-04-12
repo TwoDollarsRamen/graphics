@@ -387,9 +387,9 @@ void init_noise_texture(struct texture* texture, u32 w, u32 h) {
 
 	for (u32 i = 0; i < w * h; i++) {
 		noise[i] = make_v3f(
-			random_float(0.0f, 1.0f) * 2.0 - 1.0,
-			random_float(0.0f, 1.0f) * 2.0 - 1.0,
-			0.0f
+			random_float(-1.0f, 1.0f),
+			random_float(-1.0f, 1.0f),
+			random_float(-1.0f, 1.0f)
 		);
 	}
 

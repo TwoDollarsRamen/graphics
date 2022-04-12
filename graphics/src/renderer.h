@@ -48,6 +48,7 @@ struct drawlist_item {
 	m4f transform;
 };
 
+/* This renderer is a bit weird */
 struct renderer {
 	vector(struct drawlist_item) drawlist;
 	vector(struct light) lights;
