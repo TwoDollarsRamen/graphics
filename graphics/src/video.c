@@ -356,7 +356,7 @@ void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count
 	u64 stride, u64 offset) {
 
 	glVertexAttribPointer(index, component_count, GL_FLOAT, GL_FALSE,
-		stride, (void*)(u64)(offset));
+		(GLsizei)stride, (void*)(u64)(offset));
 	glEnableVertexAttribArray(index);
 }
 

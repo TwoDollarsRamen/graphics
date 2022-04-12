@@ -80,6 +80,8 @@ struct renderer {
 	struct texture ao_noise;
 	vector(v3f) ao_kernel;
 
+	struct texture env_map;
+
 	struct vertex_buffer fullscreen_quad;
 	struct render_target postprocess_ignore_fb;
 	struct render_target gbuffer;
@@ -89,7 +91,7 @@ struct renderer {
 	vector(struct shader*) postprocessors;
 };
 
-struct renderer* new_renderer(struct shader_config config);
+struct renderer* new_renderer(struct shader_config config, const char* env_map_path);
 void free_renderer(struct renderer* renderer);
 void renderer_draw(struct renderer* renderer, struct camera* camera);
 void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i mouse_pos);
@@ -106,7 +108,7 @@ struct camera {
 	f32 last_x, last_y;
 	f32 yaw, pitch;
 
-	float near, far;
+	f32 near, far;
 };
 
 void update_camera(GLFWwindow* window, struct camera* camera, f64 ts);
