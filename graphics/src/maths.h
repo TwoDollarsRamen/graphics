@@ -12,6 +12,14 @@ f64 toradd(f64 deg);
 f32 todegf(f32 rad);
 f32 toradf(f32 deg);
 
+force_inline f32 lerpf(f32 a, f32 b, f32 t) {
+	return a + t * (b - a);
+}
+
+force_inline f64 lerpd(f64 a, f64 b, f64 t) {
+	return a + t * (b - a);
+}
+
 typedef struct {
 	f32 x, y;
 } v2f;

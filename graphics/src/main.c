@@ -120,7 +120,9 @@ i32 main() {
 	shaders.lit           = new_shader_from_file("res/shaders/lit.glsl");
 	shaders.shadowmap     = new_shader_from_file("res/shaders/shadowmap.glsl");
 	shaders.pick          = new_shader_from_file("res/shaders/pick.glsl");
-	shaders.normal        = new_shader_from_file("res/shaders/normal.glsl");
+	shaders.g             = new_shader_from_file("res/shaders/geometry.glsl");
+	shaders.ao            = new_shader_from_file("res/shaders/ao.glsl");
+	shaders.ao_blur       = new_shader_from_file("res/shaders/ao_blur.glsl");
 	invert_shader         = new_shader_from_file("res/shaders/invert.glsl");
 	toon_shader           = new_shader_from_file("res/shaders/toon.glsl");
 	crt_shader            = new_shader_from_file("res/shaders/crt.glsl");
@@ -219,7 +221,9 @@ i32 main() {
 		shader_reload(shaders.lit);
 		shader_reload(shaders.shadowmap);
 		shader_reload(shaders.pick);
-		shader_reload(shaders.normal);
+		shader_reload(shaders.g);
+		shader_reload(shaders.ao);
+		shader_reload(shaders.ao_blur);
 		shader_reload(invert_shader);
 		shader_reload(toon_shader);
 		shader_reload(crt_shader);
@@ -331,7 +335,9 @@ i32 main() {
 	free_shader(shaders.lit);
 	free_shader(shaders.shadowmap);
 	free_shader(shaders.pick);
-	free_shader(shaders.normal);
+	free_shader(shaders.g);
+	free_shader(shaders.ao);
+	free_shader(shaders.ao_blur);
 	free_shader(invert_shader);
 	free_shader(toon_shader);
 	free_shader(crt_shader);
@@ -406,6 +412,11 @@ u64 elf_hash(const u8* data, u32 size) {
 	}
 
 	return (hash & 0x7FFFFFFFFF);
+}
+
+f32 random_float(f32 min, f32 max) {
+	f32 scale = (f32)rand() / (f32)RAND_MAX;
+	return min + scale * (max - min);
 }
 
 void print_log(const char* fmt, ...) {

@@ -200,7 +200,7 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 			read_path(cur->diffuse_map_path, 7);
 		} else if (cur && memcmp(line, "map_Ks", 6) == 0) { /* Specular map. */
 			read_path(cur->specular_map_path, 7);
-		} else if (cur && memcmp(line, "map_bump", 8) == 0) { /* Bump map. */
+		} else if (cur && memcmp(line, "map_Bump", 8) == 0) { /* Bump map. */
 			read_path(cur->bump_map_path, 9);
 		} else if (cur && memcmp(line, "bump", 4) == 0) { /* Bump map. */
 			read_path(cur->bump_map_path, 5);

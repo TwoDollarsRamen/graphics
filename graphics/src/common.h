@@ -41,3 +41,5 @@ u64 elf_hash(const u8* data, u32 size);
 u64 file_mod_time(const char* name);
 
 void print_log(const char* fmt, ...);
+
+f32 random_float(f32 min, f32 max);

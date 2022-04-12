@@ -30,22 +30,17 @@ out vec4 color;
 uniform sampler2D input_texture;
 uniform vec2 screen_size;
 
-/* From: https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/ */
-vec3 aces(vec3 x) {
-	float a = 2.51f;
-	float b = 0.03f;
-	float c = 2.43f;
-	float d = 0.59f;
-	float e = 0.14f;
-	return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
-}
-
-uniform sampler2D noise;
-
 void main() {
-	vec4 tc = texture(input_texture, fs_in.uv);
+	vec2 texel_size = 1.0 / vec2(textureSize(input_texture, 0));
+	float result = 0.0;
+	for (int x = -2; x < 2; x++) {
+		for (int y = -2; y < 2; y++) {
+			vec2 off = vec2(float(x), float(y)) * texel_size;
+			result += texture(input_texture, fs_in.uv + off).r;
+		}
+	}
 
-	color = vec4(aces(tc.rgb), tc.a);
+    color = vec4(result / (4.0 * 4.0));
 }
 
 #end FRAGMENT

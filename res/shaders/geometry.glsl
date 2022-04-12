@@ -15,6 +15,7 @@ uniform mat4 transform = mat4(1.0);
 out VS_OUT {
 	mat3 tbn;
 	vec2 uv;
+	vec3 position;
 } vs_out;
 
 void main() {
@@ -26,6 +27,9 @@ void main() {
 
 	vs_out.uv = uv;
 
+	vec4 view_pos = view * transform * vec4(position, 1.0);
+	vs_out.position = view_pos.xyz;
+
 	gl_Position = projection * view * transform * vec4(position, 1.0);
 }
 
@@ -35,11 +39,13 @@ void main() {
 
 #version 450 core
 
-out vec4 color;
+layout (location = 0) out vec4 normal;
+layout (location = 1) out vec4 position;
 
 in VS_OUT {
 	mat3 tbn;
 	vec2 uv;
+	vec3 position;
 } fs_in;
 
 uniform bool use_normal_map = false;
@@ -52,7 +58,8 @@ void main() {
 		n = normalize(fs_in.tbn * n);
 	}
 
-	color = vec4(n, 1.0);
+	normal = vec4(n, 1.0);
+	position = vec4(fs_in.position, 1.0);
 }
 
 #end FRAGMENT

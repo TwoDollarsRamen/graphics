@@ -9,6 +9,7 @@
 #include "stb_image.h"
 
 #include "video.h"
+#include "vector.h"
 
 void video_init() {
 	if (!gladLoadGL()) {
@@ -381,6 +382,35 @@ void draw_vb_n(const struct vertex_buffer* vb, u32 count) {
 	glDrawElements(draw_type, count, GL_UNSIGNED_INT, 0);
 }
 
+void init_noise_texture(struct texture* texture, u32 w, u32 h) {
+	v3f* noise = malloc(w * h * sizeof(v3f));
+
+	for (u32 i = 0; i < w * h; i++) {
+		noise[i] = make_v3f(
+			random_float(0.0f, 1.0f) * 2.0 - 1.0,
+			random_float(0.0f, 1.0f) * 2.0 - 1.0,
+			0.0f
+		);
+	}
+
+	glGenTextures(1, &texture->id);
+	glBindTexture(GL_TEXTURE_2D, texture->id);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F,
+		w, h, 0, GL_RGB,
+		GL_UNSIGNED_BYTE, noise);
+
+	texture->width = w;
+	texture->height = h;
+
+	free(noise);
+}
+
 void init_texture(struct texture* texture, const char* path) {
 	i32 w, h, n;
 	stbi_set_flip_vertically_on_load(true);
@@ -435,23 +465,32 @@ void bind_texture(const struct texture* texture, u32 unit) {
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 }
 
-void init_render_target(struct render_target* target, u32 width, u32 height) {
+void init_render_target(struct render_target* target, u32 color_attachment_count, u32 width, u32 height) {
+	target->color_count = color_attachment_count;
+
 	glGenFramebuffers(1, &target->id);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, target->id);
 
-	glGenTextures(1, &target->output);
-	glBindTexture(GL_TEXTURE_2D, target->output);
+	u32 attachments[16];
+	for (u32 i = 0; i < maximum(1, color_attachment_count); i++) {
+		glGenTextures(1, &target->output[i]);
+		glBindTexture(GL_TEXTURE_2D, target->output[i]);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, null);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, null);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, target->output[i], 0);
+
+		attachments[i] = GL_COLOR_ATTACHMENT0 + i;
+	}
+
+	glDrawBuffers(color_attachment_count, attachments);
 	
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target->output, 0);
-
 	glGenTextures(1, &target->depth);
 	glBindTexture(GL_TEXTURE_2D, target->depth);
 
@@ -476,7 +515,7 @@ void init_render_target(struct render_target* target, u32 width, u32 height) {
 
 void deinit_render_target(struct render_target* target) {
 	glDeleteFramebuffers(1, &target->id);
-	glDeleteTextures(1, &target->output);
+	glDeleteTextures(target->color_count, target->output);
 	glDeleteTextures(1, &target->depth);
 }
 
@@ -491,8 +530,10 @@ void resize_render_target(struct render_target* target, u32 width, u32 height) {
 	target->width = width;
 	target->height = height;
 
-	glBindTexture(GL_TEXTURE_2D, target->output);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+	for (u32 i = 0; i < target->color_count; i++) {
+		glBindTexture(GL_TEXTURE_2D, target->output[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+	}
 
 	glBindTexture(GL_TEXTURE_2D, target->depth);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, null);
@@ -509,14 +550,14 @@ void bind_render_target(struct render_target* target) {
 	glBindFramebuffer(GL_FRAMEBUFFER, target->id);
 }
 
-void bind_render_target_output(struct render_target* target, u32 unit) {
+void bind_render_target_output(struct render_target* target, u32 attachment, u32 unit) {
 	if (!target) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return;
 	}
 
 	glActiveTexture(GL_TEXTURE0 + unit);
-	glBindTexture(GL_TEXTURE_2D, target->output);
+	glBindTexture(GL_TEXTURE_2D, target->output[attachment]);
 }
 
 void bind_render_target_output_depth(struct render_target* target, u32 unit) {

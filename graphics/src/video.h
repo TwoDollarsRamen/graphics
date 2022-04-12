@@ -74,6 +74,7 @@ struct texture {
 	u32 width, height;
 };
 
+void init_noise_texture(struct texture* texture, u32 w, u32 h);
 void init_texture(struct texture* texture, const char* path);
 void init_texture_from_memory(struct texture* texture, void* data, u32 w, u32 h, u32 cc);
 void update_texture_contents(struct texture* texture, void* data, u32 w, u32 h, u32 cc);
@@ -84,16 +85,17 @@ struct render_target {
 	u32 id;
 	u32 width, height;
 
-	u32 output;
+	u32 color_count;
+	u32 output[16];
 	u32 depth;
 };
 
 void clear_render_target(struct render_target* target);
-void init_render_target(struct render_target* target, u32 width, u32 height);
+void init_render_target(struct render_target* target, u32 color_attachment_count, u32 width, u32 height);
 void deinit_render_target(struct render_target* target);
 void resize_render_target(struct render_target* target, u32 width, u32 height);
 void bind_render_target(struct render_target* target);
-void bind_render_target_output(struct render_target* target, u32 unit);
+void bind_render_target_output(struct render_target* target, u32 attachment, u32 unit);
 void bind_render_target_output_depth(struct render_target* target, u32 unit);
 
 struct depth_map {

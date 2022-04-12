@@ -15,11 +15,35 @@ struct renderer* new_renderer(struct shader_config config) {
 	renderer->ambient = make_v3f(1.0, 1.0, 1.0);
 	renderer->ambient_intensity = 0.1f;
 
-	init_render_target(&renderer->normal_fb, screen_w, screen_h);
-	init_render_target(&renderer->postprocess_ignore_fb, screen_w, screen_h);
-	init_render_target(&renderer->scene_fb, screen_w, screen_h);
-	init_render_target(&renderer->fb0, screen_w, screen_h);
-	init_render_target(&renderer->fb1, screen_w, screen_h);
+	init_noise_texture(&renderer->ao_noise, 4, 4);
+
+	for (u32 i = 0; i < 64; i++) {
+		v3f sample = {
+			random_float(0.0f, 1.0f) * 2.0f - 1.0f,
+			random_float(0.0f, 1.0f) * 2.0f - 1.0f,
+			random_float(0.0f, 1.0f)
+		};
+
+		sample = v3f_normalised(sample);
+		sample = v3f_scale(sample, random_float(0.0f, 1.0f));
+
+		f32 scale = (f32)i / 64.0f;
+		scale = lerpf(0.1f, 1.0f, scale * scale);
+
+		sample = v3f_scale(sample, scale);
+
+		vector_push(renderer->ao_kernel, sample);
+	}
+
+	renderer->scene_fb = calloc(1, sizeof(struct render_target));
+	renderer->fb0      = calloc(1, sizeof(struct render_target));
+	renderer->fb1      = calloc(1, sizeof(struct render_target));
+
+	init_render_target(&renderer->gbuffer,               2, screen_w, screen_h);
+	init_render_target(&renderer->postprocess_ignore_fb, 1, screen_w, screen_h);
+	init_render_target( renderer->scene_fb,              1, screen_w, screen_h);
+	init_render_target( renderer->fb0,                   1, screen_w, screen_h);
+	init_render_target( renderer->fb1,                   1, screen_w, screen_h);
 
 	init_depth_map(&renderer->shadowmap, 1024, 1024);
 
@@ -47,10 +71,12 @@ struct renderer* new_renderer(struct shader_config config) {
 }
 
 void free_renderer(struct renderer* renderer) {
-	deinit_render_target(&renderer->scene_fb);
+	deinit_texture(&renderer->ao_noise);
+
+	deinit_render_target(renderer->scene_fb);
 	deinit_render_target(&renderer->postprocess_ignore_fb);
-	deinit_render_target(&renderer->fb0);
-	deinit_render_target(&renderer->fb1);
+	deinit_render_target(renderer->fb0);
+	deinit_render_target(renderer->fb1);
 
 	free(renderer);
 }
@@ -173,9 +199,9 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 	}
 
 	/* Normal buffer */
-	clear_render_target(&renderer->normal_fb);
+	clear_render_target(&renderer->gbuffer);
 
-	struct shader* s = renderer->shaders.normal;
+	struct shader* s = renderer->shaders.g;
 
 	bind_shader(s);
 
@@ -189,6 +215,36 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 		draw_model(model, s);
 	}
+
+	/* Ambient occlusion */
+	clear_render_target(renderer->fb0);
+
+	s = renderer->shaders.ao;
+	bind_shader(s);
+
+	bind_render_target_output(&renderer->gbuffer, 0, 0);
+	shader_set_i(s, "normals", 0);
+
+	bind_render_target_output(&renderer->gbuffer, 1, 1);
+	shader_set_i(s, "positions", 1);
+
+	bind_texture(&renderer->ao_noise, 3);
+	shader_set_i(s, "noise", 3);
+
+	shader_set_m4f(s, "projection", camera_proj);
+	shader_set_m4f(s, "view", camera_view);
+
+	shader_set_v2f(s, "screen_size", make_v2f(screen_w, screen_h));
+
+	for (u32 i = 0; i < 64; i++) {
+		char name[32];
+		sprintf(name, "samples[%u]", i);
+		shader_set_v3f(s, name, renderer->ao_kernel[i]);
+	}
+
+	bind_vb_for_draw(&renderer->fullscreen_quad);
+	draw_vb(&renderer->fullscreen_quad);
+	bind_vb_for_draw(null);
 
 	clear_render_target(&renderer->postprocess_ignore_fb);
 
@@ -212,7 +268,7 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			draw_model(model, s);
 		}
 
-		clear_render_target(&renderer->scene_fb);
+		clear_render_target(renderer->scene_fb);
 	} else {
 		bind_render_target(null);
 	}
@@ -299,18 +355,30 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 	/* Run the post-processing on the scene, using the ping-pong frame buffers. */
 	if (vector_count(renderer->postprocessors) > 0) {
-		struct render_target* last_target = &renderer->fb0;
+		struct render_target* last_target = renderer->fb0;
 
 		for (u32 i = 0; i < vector_count(renderer->postprocessors); i++) {
 			struct shader* shader = renderer->postprocessors[i];
+
+			if (shader == null) {
+				if (last_target == renderer->fb0) {
+					renderer->fb0 = renderer->scene_fb;
+				} else {
+					renderer->fb1 = renderer->scene_fb;
+				}
+
+				renderer->scene_fb = last_target;
+				
+				continue;
+			}
 
 			struct render_target* target;
 			if (i == vector_count(renderer->postprocessors) - 1) {
 				target = null;
 			} else if (i % 2 == 0) {
-				target = &renderer->fb1;
+				target = renderer->fb1;
 			} else {
-				target = &renderer->fb0;
+				target = renderer->fb0;
 			}
 
 			bind_render_target(target);
@@ -319,23 +387,31 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			bind_shader(shader);
 
 			if (i == 0) {
-				bind_render_target_output(&renderer->scene_fb, 0);
+				bind_render_target_output(renderer->scene_fb, 0, 0);
 			} else {
-				bind_render_target_output(last_target, 0);
+				bind_render_target_output(last_target, 0, 0);
 			}
 
 			shader_set_m4f(shader, "projection", camera_proj);
 			shader_set_m4f(shader, "view", camera_view);
 
 			shader_set_i(shader, "input_texture", 0);
-			bind_render_target_output(&renderer->scene_fb, 1);
+
+			bind_render_target_output(renderer->scene_fb, 0, 1);
 			shader_set_i(shader, "original_texture", 1);
-			bind_render_target_output(&renderer->postprocess_ignore_fb, 2);
+
+			bind_render_target_output(&renderer->postprocess_ignore_fb, 0, 2);
 			shader_set_i(shader, "ignore", 2);
-			bind_render_target_output_depth(&renderer->scene_fb, 3);
+
+			bind_render_target_output_depth(renderer->scene_fb, 3);
 			shader_set_i(shader, "depth", 3);
-			bind_render_target_output(&renderer->normal_fb, 4);
+
+			bind_render_target_output(&renderer->gbuffer, 0, 4);
 			shader_set_i(shader, "normals", 4);
+
+			bind_render_target_output(&renderer->gbuffer, 1, 5);
+			shader_set_i(shader, "positions", 5);
+
 			shader_set_v2f(shader, "screen_size", make_v2f(screen_w, screen_h));
 
 			bind_vb_for_draw(&renderer->fullscreen_quad);
@@ -356,7 +432,7 @@ void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i m
 	m4f camera_proj = get_camera_proj(camera, make_v2i(screen_w, screen_h));
 	m4f camera_view = get_camera_view(camera);
 
-	clear_render_target(&renderer->fb0);
+	clear_render_target(renderer->fb0);
 
 	struct shader* s = renderer->shaders.pick;
 
