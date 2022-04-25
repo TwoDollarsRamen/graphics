@@ -1,3 +1,6 @@
+#include <string.h>
+#include <stdlib.h>
+
 #include "common.h"
 
 #ifdef _WIN32

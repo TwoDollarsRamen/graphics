@@ -158,17 +158,17 @@ i32 main() {
 	renderer->ambient_intensity = 0.5f;
 	struct renderer2d* renderer2d = new_renderer2d(sprite_shader);
 
-	//vector_push(renderer->postprocessors, bright_extract_shader);
-	//vector_push(renderer->postprocessors, blur_h_shader);
-	//vector_push(renderer->postprocessors, blur_v_shader);
-	//vector_push(renderer->postprocessors, blur_h_shader);
-	//vector_push(renderer->postprocessors, blur_v_shader);
-	//vector_push(renderer->postprocessors, bloom_shader);
+	vector_push(renderer->postprocessors, bright_extract_shader);
+	vector_push(renderer->postprocessors, blur_h_shader);
+	vector_push(renderer->postprocessors, blur_v_shader);
+	vector_push(renderer->postprocessors, blur_h_shader);
+	vector_push(renderer->postprocessors, blur_v_shader);
+	vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
-	//vector_push(renderer->postprocessors, tonemap_shader);
-//	vector_push(renderer->postprocessors, toon_shader);
-	//vector_push(renderer->postprocessors, outline_shader);
-	//vector_push(renderer->postprocessors, antialias_shader);
+	vector_push(renderer->postprocessors, tonemap_shader);
+	vector_push(renderer->postprocessors, toon_shader);
+	vector_push(renderer->postprocessors, outline_shader);
+	vector_push(renderer->postprocessors, antialias_shader);
 	//vector_push(renderer->postprocessors, crt_shader);
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_translate(m4f_identity(), make_v3f(3.0f, 1.5f, 1.0f)) }));
