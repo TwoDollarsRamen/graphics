@@ -425,20 +425,6 @@ char* copy_string(const char* src) {
 	return s;
 }
 
-u64 elf_hash(const u8* data, u32 size) {
-	u64 hash = 0, x = 0;
-
-	for (u32 i = 0; i < size; i++) {
-		hash = (hash << 4) + data[i];
-		if ((x = hash & 0xF000000000LL) != 0) {
-			hash ^= (x >> 24);
-			hash &= ~x;
-		}
-	}
-
-	return (hash & 0x7FFFFFFFFF);
-}
-
 f32 random_float(f32 min, f32 max) {
 	f32 scale = (f32)rand() / (f32)RAND_MAX;
 	return min + scale * (max - min);

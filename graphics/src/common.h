@@ -1,7 +1,8 @@
 #pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define null ((void*)0x0)
 
@@ -31,13 +32,14 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+typedef size_t usize;
+
 typedef float f32;
 typedef double f64;
 
 bool read_raw(const char* filename, u8** buf, u64* size, bool term);
 char* copy_string(const char* str);
 char* get_file_path(const char* name);
-u64 elf_hash(const u8* data, u32 size);
 u64 file_mod_time(const char* name);
 
 void print_log(const char* fmt, ...);

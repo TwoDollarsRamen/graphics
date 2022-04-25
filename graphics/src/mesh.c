@@ -127,8 +127,8 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 	free(indices);
 
 	/* Material */
-	if (omesh->material_name) {
-		struct obj_material* material = table_get(omodel->materials, omesh->material_name);
+	if (omesh->material_id) {
+		struct obj_material* material = table_get(omodel->materials, omesh->material_id);
 
 		if (material) {
 			mesh->ambient = material->ambient;

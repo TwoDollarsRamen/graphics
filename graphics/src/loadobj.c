@@ -179,12 +179,10 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 		}
 
 		if (memcmp(line, "newmtl", 6) == 0) {
-			char* name = copy_string(line + 7);
-
-			cur = table_set(model->materials, name, &(struct obj_material) { 0 });
+			u64 id = hash_string(line + 7);
+			table_set(model->materials, id, (struct obj_material) { 0 });
+			cur = table_get(model->materials, id);
 			cur->alpha = 1.0f;
-
-			free(name);
 		} else if (cur && memcmp(line, "Ns", 2) == 0) { /* Specular exponent. */
 			parse_float(line + 3, &cur->specular_exponent);
 		} else if (cur && memcmp(line, "Ka", 2) == 0) { /* Ambient colour. */
@@ -228,8 +226,6 @@ bool load_obj(const char* filename, struct obj_model* model) {
 		return false;
 	}
 
-	model->materials = new_table(sizeof(struct obj_material));
-
 	char* file_path = get_file_path(filename);
 
 	char* line = malloc(256);
@@ -253,7 +249,7 @@ bool load_obj(const char* filename, struct obj_model* model) {
 		}
 
 		if (memcmp(line, "usemtl", 6) == 0) { /* Material. */
-			current_mesh->material_name = copy_string(line + 7);
+			current_mesh->material_id = hash_string(line + 7);
 		} else if (memcmp(line, "mtllib", 6) == 0) {
 			/* Load an MTL file and parse the materials contained
 			 * within. */
@@ -314,10 +310,6 @@ void deinit_obj(struct obj_model* model) {
 		struct obj_mesh* mesh = model->meshes + i;
 
 		free_vector(mesh->vertices);
-
-		if (mesh->material_name) {
-			free(mesh->material_name);
-		}
 	}
 
 	free_vector(model->positions);
@@ -326,8 +318,8 @@ void deinit_obj(struct obj_model* model) {
 
 	free_vector(model->meshes);
 
-	for (table_iter(model->materials, iter)) {
-		struct obj_material* m = iter.value;
+	for (u64* i = table_first(model->materials); i; i = table_next(model->materials, *i)) {
+		struct obj_material* m = table_get(model->materials, *i);
 
 		if (m->ambient_map_path)      { free(m->ambient_map_path); }
 		if (m->diffuse_map_path)      { free(m->diffuse_map_path); }

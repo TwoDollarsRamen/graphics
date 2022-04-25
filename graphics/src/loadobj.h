@@ -9,7 +9,7 @@
 
 struct obj_vertex { /* Indexes into the position, normal and UV vectors. */
 	u32 position, uv, normal;
-}; 
+};
 
 struct obj_material {
 	v3f ambient;
@@ -32,7 +32,7 @@ struct obj_mesh {
 
 	/* Key into the `materials' table in the
 	 * `obj_model' struct. */
-	char* material_name;
+	u64 material_id;
 };
 
 /* An intermediate format between the raw
@@ -49,7 +49,7 @@ struct obj_model {
 
 	vector(struct obj_mesh) meshes;
 
-	struct table* materials;
+	table(u64, struct obj_material) materials;
 };
 
 bool load_obj(const char* filename, struct obj_model* model);
