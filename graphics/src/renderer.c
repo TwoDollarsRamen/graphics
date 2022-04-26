@@ -5,10 +5,8 @@
 
 #include "renderer.h"
 
-struct renderer* new_renderer(struct shader_config config, const char* env_map_path) {
+struct renderer* new_renderer(struct shader_config config) {
 	struct renderer* renderer = calloc(1, sizeof(struct renderer));
-
-	init_texture(&renderer->env_map, env_map_path);
 
 	renderer->selected = 0;
 
@@ -74,7 +72,6 @@ struct renderer* new_renderer(struct shader_config config, const char* env_map_p
 
 void free_renderer(struct renderer* renderer) {
 	deinit_texture(&renderer->ao_noise);
-	deinit_texture(&renderer->env_map);
 
 	deinit_render_target(renderer->scene_fb);
 	deinit_render_target(&renderer->postprocess_ignore_fb);
@@ -371,9 +368,6 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 
 		bind_render_target_output(renderer->fb1, 0, 1);
 		shader_set_i(s, "ao", 1);
-
-		bind_texture(&renderer->env_map, 2);
-		shader_set_i(s, "env_map", 2);
 
 		shader_set_v2f(s, "screen_size", make_v2f(screen_w, screen_h));;
 

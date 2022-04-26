@@ -48,3 +48,4 @@ void renderer2d_push(struct renderer2d* self, struct quad* quad);
 void renderer2d_flush(struct renderer2d* self);
 void renderer2d_set_texture(struct renderer2d* self, struct texture* texture);
 void render_text(struct renderer2d* renderer, struct font* font, const char* text, v2f position);
+i32 font_height(struct font* font);

@@ -291,3 +291,7 @@ void render_text(struct renderer2d* renderer, struct font* font, const char* tex
 
 	renderer2d_flush(renderer);
 }
+
+i32 font_height(struct font* font) {
+	return font->height;
+}

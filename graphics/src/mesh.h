@@ -14,6 +14,7 @@ struct mesh {
 	v3f ambient, diffuse, specular;
 	v3f emissive;
 	f32 shininess;
+	f32 alpha;
 
 	bool use_diffuse_map;
 	struct texture diffuse_map;

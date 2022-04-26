@@ -182,6 +182,7 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 			char* name = copy_string(line + 7);
 
 			cur = table_set(model->materials, name, &(struct obj_material) { 0 });
+			cur->alpha = 1.0f;
 
 			free(name);
 		} else if (cur && memcmp(line, "Ns", 2) == 0) { /* Specular exponent. */
@@ -208,6 +209,8 @@ static void parse_mtl(struct obj_model* model, const char* file_path, const char
 			read_path(cur->displacement_map_path, 5);
 		} else if (cur && memcmp(line, "decal", 5) == 0) { /* Stencil map. */
 			read_path(cur->displacement_map_path, 6);
+		} else if (cur && memcmp(line, "d", 1) == 0) { /* Alpha */
+			parse_float(line + 2, &cur->alpha);
 		}
 	}
 

@@ -17,6 +17,7 @@ struct obj_material {
 	v3f specular;
 	v3f emissive;
 	f32 specular_exponent;
+	f32 alpha;
 
 	char* ambient_map_path;
 	char* diffuse_map_path;

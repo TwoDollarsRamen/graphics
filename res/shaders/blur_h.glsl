@@ -30,20 +30,15 @@ out vec4 out_color;
 uniform sampler2D input_texture;
 uniform vec2 screen_size;
 
-void main() {
-	/* This is incredibly slow. It looks good, though, when done twice,
-	 * so too bad, I guess. */
-	
+void main() {	
 	float blur_amt = 0.2;
 
 	vec4 accum = vec4(0.0);
 	float tap_count = 0;
 
 	for (float x = -0.1; x <= 0.1; x += 0.01) {
-		for (float y = -0.1; y <= 0.1; y += 0.01) {
-			accum += texture(input_texture, fs_in.uv + vec2(x, y) * blur_amt);
-			tap_count++;
-		}
+		accum += texture(input_texture, fs_in.uv + vec2(0.0, x) * blur_amt);
+		tap_count++;
 	}
 
 	out_color = accum / tap_count;

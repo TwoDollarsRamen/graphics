@@ -109,7 +109,8 @@ i32 main() {
 	struct shader* crt_shader = { 0 };
 	struct shader* tonemap_shader = { 0 };
 	struct shader* antialias_shader = { 0 };
-	struct shader* blur_shader = { 0 };
+	struct shader* blur_h_shader = { 0 };
+	struct shader* blur_v_shader = { 0 };
 	struct shader* ca_shader = { 0 };
 	struct shader* bright_extract_shader = { 0 };
 	struct shader* bloom_shader = { 0 };
@@ -128,7 +129,8 @@ i32 main() {
 	crt_shader            = new_shader_from_file("res/shaders/crt.glsl");
 	tonemap_shader        = new_shader_from_file("res/shaders/tonemap.glsl");
 	antialias_shader      = new_shader_from_file("res/shaders/antialias.glsl");
-	blur_shader           = new_shader_from_file("res/shaders/blur.glsl");
+	blur_h_shader         = new_shader_from_file("res/shaders/blur_h.glsl");
+	blur_v_shader         = new_shader_from_file("res/shaders/blur_v.glsl");
 	ca_shader             = new_shader_from_file("res/shaders/ca.glsl");
 	bright_extract_shader = new_shader_from_file("res/shaders/bright_extract.glsl");
 	bloom_shader          = new_shader_from_file("res/shaders/bloom.glsl");
@@ -152,19 +154,21 @@ i32 main() {
 	struct model* scene = new_model_from_obj(&model);
 	deinit_obj(&model);
 
-	struct renderer* renderer = new_renderer(shaders, "res/desert.jpg");
+	struct renderer* renderer = new_renderer(shaders);
 	renderer->ambient_intensity = 0.5f;
 	struct renderer2d* renderer2d = new_renderer2d(sprite_shader);
 
-	vector_push(renderer->postprocessors, bright_extract_shader);
-	vector_push(renderer->postprocessors, blur_shader);
-	vector_push(renderer->postprocessors, blur_shader);
-	vector_push(renderer->postprocessors, bloom_shader);
+	//vector_push(renderer->postprocessors, bright_extract_shader);
+	//vector_push(renderer->postprocessors, blur_h_shader);
+	//vector_push(renderer->postprocessors, blur_v_shader);
+	//vector_push(renderer->postprocessors, blur_h_shader);
+	//vector_push(renderer->postprocessors, blur_v_shader);
+	//vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
-	vector_push(renderer->postprocessors, tonemap_shader);
+	//vector_push(renderer->postprocessors, tonemap_shader);
 //	vector_push(renderer->postprocessors, toon_shader);
 	//vector_push(renderer->postprocessors, outline_shader);
-	vector_push(renderer->postprocessors, antialias_shader);
+	//vector_push(renderer->postprocessors, antialias_shader);
 	//vector_push(renderer->postprocessors, crt_shader);
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_translate(m4f_identity(), make_v3f(3.0f, 1.5f, 1.0f)) }));
@@ -212,6 +216,9 @@ i32 main() {
 
 	struct font* consolas = new_font_from_file("res/consolas.ttf", 14.0f);
 
+	char fps_buffer[128] = { '\0' };
+	f64 tunfps = 0.0;
+
 	f64 ts = 0.0f;
 	f64 now = glfwGetTime(), last = glfwGetTime();
 	bool holding_mouse = true;
@@ -230,7 +237,8 @@ i32 main() {
 		shader_reload(crt_shader);
 		shader_reload(tonemap_shader);
 		shader_reload(antialias_shader);
-		shader_reload(blur_shader);
+		shader_reload(blur_h_shader);
+		shader_reload(blur_v_shader);
 		shader_reload(ca_shader);
 		shader_reload(bright_extract_shader);
 		shader_reload(bloom_shader);
@@ -292,6 +300,14 @@ i32 main() {
 				item->transform = m4f_translate(item->transform,
 					v3f_scale(make_v3f(0.0f, -3.0f, 0.0f), (f32)ts));
 			}
+
+			if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+				item->transform = m4f_rotate(item->transform, 3.0f * (f32)ts, make_v3f(0.0f, 1.0f, 0.0f));
+			}
+
+			if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+				item->transform = m4f_rotate(item->transform, -3.0f * (f32)ts, make_v3f(0.0f, 1.0f, 0.0f));
+			}
 		} else {
 			update_camera(window, &camera, ts);
 		}
@@ -309,8 +325,9 @@ i32 main() {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+		render_text(renderer2d, consolas, fps_buffer, make_v2f(0.0f, 0.0f));
 		if (log_buffer) {
-			render_text(renderer2d, consolas, log_buffer, make_v2f(0.0f, 0.0f));
+			render_text(renderer2d, consolas, log_buffer, make_v2f(0.0f, (f32)font_height(consolas)));
 		}
 
 		enable_depth_test();
@@ -321,6 +338,12 @@ i32 main() {
 		now = glfwGetTime();
 		ts = now - last;
 		last = now;
+
+		tunfps -= ts;
+		if (tunfps <= 0.0) {
+			tunfps = 1.0;
+			sprintf(fps_buffer, "FPS: %g, Timestep: %g", 1.0 / ts, ts);
+		}
 	}
 
 	free_font(consolas);
@@ -344,7 +367,8 @@ i32 main() {
 	free_shader(crt_shader);
 	free_shader(tonemap_shader);
 	free_shader(antialias_shader);
-	free_shader(blur_shader);
+	free_shader(blur_v_shader);
+	free_shader(blur_h_shader);
 	free_shader(ca_shader);
 	free_shader(bright_extract_shader);
 	free_shader(bloom_shader);

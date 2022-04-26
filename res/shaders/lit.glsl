@@ -61,7 +61,7 @@ uniform sampler2D normal_map;
 uniform bool use_shadows = false;
 uniform sampler2DShadow shadowmap;
 
-uniform sampler2D env_map;
+uniform sampler2D bayer;
 
 uniform sampler2D ao;
 
@@ -90,6 +90,7 @@ struct Material {
 	vec3 ambient, diffuse, specular;
 	vec3 emissive;
 	float shininess;
+	float alpha;
 };
 
 uniform Material material;
@@ -169,7 +170,13 @@ vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_di
 	return shadow * (diffuse + specular);
 }
 
-void main() {
+void main() {	
+	/* This is a bit of a hack to get the texture coordinates
+	 * of a full-screen quad. It won't work if the final scene quad isn't
+	 * being drawn to the entire screen, as gl_FragCoord is
+	 * relative to the window, not the quad vertices. */
+	vec2 screen_texcoord = gl_FragCoord.xy / screen_size;
+
 	vec4 diffuse_map_color = vec4(1.0);
 	if (use_diffuse_map) {
 		diffuse_map_color = texture(diffuse_map, fs_in.uv);
@@ -188,14 +195,8 @@ void main() {
 		n = normalize(fs_in.tbn * n);
 	}
 
-	/* Really SSAO should be for deferred lighting.
-	 *
-	 * This is a bit of a hack to get the texture coordinates
-	 * of a full-screen quad. It won't work if the quad isn't
-	 * being drawn to the entire screen, as gl_FragCoord is
-	 * relative to the window, not the quad vertices. */
-	vec2 ao_texcoord = gl_FragCoord.xy / screen_size;
-	vec4 ambient_occlusion = texture(ao, ao_texcoord);
+	/* Really SSAO should be for deferred lighting... */
+	vec4 ambient_occlusion = texture(ao, screen_texcoord);
 
 	vec3 lighting_result =
 			diffuse_map_color.rgb *

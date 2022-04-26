@@ -135,6 +135,7 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 			mesh->diffuse = material->diffuse;
 			mesh->specular = material->specular;
 			mesh->emissive = material->emissive;
+			mesh->alpha = material->alpha;
 			mesh->shininess = material->specular_exponent;
 
 			if (material->diffuse_map_path) {
@@ -226,6 +227,7 @@ void draw_model(struct model* model, struct shader* shader) {
 		shader_set_v3f(shader, "material.specular",  mesh->specular);
 		shader_set_v3f(shader, "material.emissive",  mesh->emissive);
 		shader_set_f(  shader, "material.shininess", mesh->shininess);
+		shader_set_f(  shader, "material.alpha",     mesh->alpha);
 
 		bind_vb_for_draw(&model->meshes[i].vb);
 		draw_vb(&model->meshes[i].vb);

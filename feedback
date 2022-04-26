@@ -1,0 +1,12 @@
+ == Feedback Document ==
+
+This feedback relates to the OpenGL application.
+
+Points of feedback (x marks as implemented):
+ [ ] Make it in Vulkan.
+ [x] Rotate the selected object.
+ [x] Make the bloom blur faster.
+ [x] Make the camera near clipping plane smaller.
+
+Technology used:
+
