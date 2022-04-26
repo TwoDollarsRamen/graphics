@@ -69,7 +69,7 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 
 			current++;
 
-			if (count > line_cap) {
+			if (count + 1 > line_cap) {
 				line_cap = count + 1;
 				line = realloc(line, line_cap);
 			}

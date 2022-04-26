@@ -21,7 +21,7 @@ struct renderer2d* new_renderer2d(struct shader* shader) {
 	push_vertices(&self->vb, self->verts,
 		sizeof(struct vertex2d) * renderer2d_batch_size * renderer2d_verts_per_quad);
 	push_indices(&self->vb, self->indices,
-		sizeof(struct vertex2d) * renderer2d_batch_size * renderer2d_indices_per_quad);
+		renderer2d_batch_size * renderer2d_indices_per_quad);
 	configure_vb(&self->vb, 0, 2, sizeof(struct vertex2d), offsetof(struct vertex2d, position));
 	configure_vb(&self->vb, 1, 2, sizeof(struct vertex2d), offsetof(struct vertex2d, uv));
 	bind_vb_for_edit(null);
