@@ -3,10 +3,46 @@
 This feedback relates to the OpenGL application.
 
 Points of feedback (x marks as implemented):
- [ ] Make it in Vulkan.
- [x] Rotate the selected object.
- [x] Make the bloom blur faster.
- [x] Make the camera near clipping plane smaller.
+ - [ ] Make it in Vulkan.
+ - [x] Rotate the selected object.
+ - [x] Make the bloom blur faster.
+ - [x] Make the camera near clipping plane smaller.
 
-Technology used:
+ = Technology overview =
+This renderer has the following features:
+ - Custom Wavefront parser.
+ - Custom MTL parser for Wavefront materials.
+ - Shader parsing (so that the vertex and fragment shaders can be in the same file).
+ - Albedo, specular and normal mapping.
+ - Point and directional lights, using the Binn-phong lighting model.
+ - Directional shadows.
+ - Mouse picking.
+ - Ambient Occlusion.
+ - Post processing pipeline.
+ - Post processing shaders:
+    - CRT monitor effect.
+    - Bloom.
+    - FXAA antialiasing.
+    - Chromatic abberation.
+    - Outline.
+    - 16-colour palette.
+	- ACES tone-mapping.
+ - Font rendering with batching.
 
+It's written in OpenGL, an API for interfacing with the graphics card, though
+OpenGL is going out of fashion today, being replaced by lower-level APIs like
+Vulkan and DirectX-12. Similar lower level APIs such as Vulkan are attractive
+because their low-level nature  allows more optimisations to be made and more 
+tricks to be executed, allowing for higher-fidelity graphics that run better.
+
+Shaders for OpenGL are written in a language called "GLSL", standing for OpenGL
+Shading Language. Some modern game engines, like Unity and Blender, use node-
+based systems for writing shaders instead of text-based programming languages,
+making it easier for none-programmers like designers and artists to create
+shaders as well. Having tried both shader graph and GLSL during this project,
+I can say that I much prefer GLSL. This is mostly because I have never
+programmed in a node-based language before, and I found it rather messy. HLSL,
+another text-based shading language, looks interesting and has some helper
+functions like `saturate' that GLSL doesn't have; For my OpenGL outline shader,
+I used a tutorial that was originally meant for Unity and HLSL and had to learn
+a little bit about it so that I could translate some snippets over to GLSL.
