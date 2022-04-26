@@ -56,6 +56,11 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 
 	bool has_geometry = false;
 
+	char* line = null;
+	usize line_cap = 0;
+
+	u32 line_count = 1;
+
 	u32 count = 0;
 	i32 adding_to = -1;
 	for (const char* current = source; *current != '\0'; current++) {
@@ -64,17 +69,38 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 
 			current++;
 
-			char* line = malloc(count + 1);
+			if (count > line_cap) {
+				line_cap = count + 1;
+				line = realloc(line, line_cap);
+			}
 			memcpy(line, current - count - minus, count);
 			line[count] = '\0';
 
 			if (strstr(line, "#begin VERTEX")) {
 				adding_to = 0;
+
+				strcat(vertex_source, "#version 450 core\n");
+
+				char buf[256];
+				sprintf(buf, "#line %d\n", line_count);
+				strcat(vertex_source, buf);
 			} else if (strstr(line, "#begin FRAGMENT")) {
 				adding_to = 1;
+
+				strcat(fragment_source, "#version 450 core\n");
+
+				char buf[256];
+				sprintf(buf, "#line %d\n", line_count);
+				strcat(fragment_source, buf);
 			} else if (strstr(line, "#begin GEOMETRY")) {
 				adding_to = 2;
 				has_geometry = true;
+
+				strcat(geometry_source, "#version 450 core\n");
+
+				char buf[256];
+				sprintf(buf, "#line %d\n", line_count);
+				strcat(geometry_source, buf);
 			} else if (strstr(line, "#end VERTEX") ||
 				strstr(line, "#end FRAGMENT") ||
 				strstr(line, "#end GEOMETRY")) {
@@ -90,13 +116,15 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 				strcat(geometry_source, "\n");
 			}
 
-			free(line);
-
 			count = 0;
+
+			line_count++;
 		}
 
 		count++;
 	}
+
+	free(line);
 
 	const char* vsp = vertex_source;
 	const char* fsp = fragment_source;

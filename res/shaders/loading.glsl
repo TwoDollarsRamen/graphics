@@ -1,6 +1,6 @@
 #begin VERTEX
 
-#version 450 core
+
 
 layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 uv;
@@ -22,7 +22,7 @@ void main() {
 
 #begin FRAGMENT
 
-#version 450 core
+
 
 in VS_OUT {
 	vec2 uv;

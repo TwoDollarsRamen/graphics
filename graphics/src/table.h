@@ -27,12 +27,14 @@
  *     printf("%u: %d\n", *i, *(i32*)table_get(test_table, *i));
  * }
  *
- * free_table(test_table;
+ * free_table(test_table);
  */
 
 #define table_null_key UINT64_MAX
 #define table_load_factor 0.75
 
+/* Takes a struct value instead of a type and gets
+ * the offset of a property. */
 #define voffsetof(v_, m_) \
 	(usize)(((u8*)(&((v_).m_))) - ((u8*)(&v_)))
 
@@ -41,7 +43,7 @@ u64 hash_string(const char* str);
 
 enum {
 	table_el_state_active = 0,
-	table_el_state_inactive = 1
+	table_el_state_inactive
 };
 
 #define _table_el(kt_, vt_) \

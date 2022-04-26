@@ -1,7 +1,5 @@
 #begin VERTEX
 
-#version 330 core
-
 layout (location = 0) in vec3 position;
 
 uniform mat4 light_matrix = mat4(1.0);
@@ -14,8 +12,6 @@ void main() {
 #end VERTEX
 
 #begin FRAGMENT
-
-#version 330 core
 
 void main() {}
 

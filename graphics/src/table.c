@@ -69,7 +69,7 @@ void* _table_first_key(void* els, usize el_size, usize capacity, usize count, us
 	u64 nk = table_null_key;
 
 	for (usize i = 0; i < capacity; i++) {
-		u8* el = els + i * el_size;
+		u8* el = (u8*)els + i * el_size;
 		if (memcmp(el + key_off, &nk, key_size) != 0) {
 			return el + key_off;
 		}
@@ -96,7 +96,7 @@ void* _table_next_key(void* els, usize el_size, usize capacity, usize count, usi
 	}
 
 	for (usize i = idx + 1; i < capacity; i++) {
-		el = els + i * el_size;
+		el = (u8*)els + i * el_size;
 		if (memcmp(el + key_off, &nk, key_size) != 0) {
 			return el + key_off;
 		}

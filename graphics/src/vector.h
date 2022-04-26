@@ -25,9 +25,9 @@
 #define vector_default_capacity 8
 
 struct vector_header {
-	u32 count;
-	u32 capacity;
-	u64 element_size;
+	usize count;
+	usize capacity;
+	usize element_size;
 };
 
 #define vector(t_) t_*

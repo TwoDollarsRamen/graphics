@@ -1,6 +1,6 @@
 #begin VERTEX
 
-#version 450 core
+
 
 layout (location = 0) in vec3 position;
 
@@ -16,7 +16,7 @@ void main() {
 
 #begin FRAGMENT
 
-#version 450 core
+
 
 out vec4 out_color;
 

@@ -166,8 +166,8 @@ i32 main() {
 	vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
-	vector_push(renderer->postprocessors, toon_shader);
-	vector_push(renderer->postprocessors, outline_shader);
+	//vector_push(renderer->postprocessors, toon_shader);
+	//vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
 	//vector_push(renderer->postprocessors, crt_shader);
 
@@ -439,7 +439,7 @@ void print_log(const char* fmt, ...) {
 
 	va_end(args);
 
-	u32 len = (u32)strlen(message);
+	usize len = strlen(message);
 
 	if (vector_count(log_buffer)) {
 		*vector_end(log_buffer) = message[0];
@@ -450,7 +450,8 @@ void print_log(const char* fmt, ...) {
 	}
 
 	if (vector_count(log_buffer)) {
-		*vector_end(log_buffer) = '\0';
+		*(vector_end(log_buffer) + 1)
+			= '\0';
 	}
 
 	printf("%s\n", message);
