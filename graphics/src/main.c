@@ -79,7 +79,7 @@ i32 main() {
 	glfwWindowHint(GLFW_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	GLFWwindow* window = glfwCreateWindow(1366, 768, "Graphics", null, null);
+	GLFWwindow* window = glfwCreateWindow(screen_w, screen_h, "Graphics", null, null);
 	glfwMakeContextCurrent(window);
 
 	glfwSwapInterval(0);
