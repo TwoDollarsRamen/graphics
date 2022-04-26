@@ -14,11 +14,18 @@ enum {
 	light_directional
 };
 
+/* Generic representation of point and directional lights;
+ * So that a single vector can be used to represent all
+ * of the lights in the renderer.
+ *
+ * Multiple directional lights are supported, but only the
+ * first one with `cast_shadows' set to true is used to
+ * draw the shadow map. */
 struct light {
 	u32 type;
 
 	v3f ambient, specular, diffuse;
-	
+
 	f32 intensity;
 
 	union {
@@ -34,6 +41,7 @@ struct light {
 	} as;
 };
 
+/* Defines the shaders to be used by the renderer. */
 struct shader_config {
 	struct shader* lit;
 	struct shader* shadowmap;

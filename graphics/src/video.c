@@ -59,8 +59,6 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 	char* line = null;
 	usize line_cap = 0;
 
-	u32 line_count = 1;
-
 	u32 count = 0;
 	i32 adding_to = -1;
 	for (const char* current = source; *current != '\0'; current++) {
@@ -80,27 +78,15 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 				adding_to = 0;
 
 				strcat(vertex_source, "#version 450 core\n");
-
-				char buf[256];
-				sprintf(buf, "#line %d\n", line_count);
-				strcat(vertex_source, buf);
 			} else if (strstr(line, "#begin FRAGMENT")) {
 				adding_to = 1;
 
 				strcat(fragment_source, "#version 450 core\n");
-
-				char buf[256];
-				sprintf(buf, "#line %d\n", line_count);
-				strcat(fragment_source, buf);
 			} else if (strstr(line, "#begin GEOMETRY")) {
 				adding_to = 2;
 				has_geometry = true;
 
 				strcat(geometry_source, "#version 450 core\n");
-
-				char buf[256];
-				sprintf(buf, "#line %d\n", line_count);
-				strcat(geometry_source, buf);
 			} else if (strstr(line, "#end VERTEX") ||
 				strstr(line, "#end FRAGMENT") ||
 				strstr(line, "#end GEOMETRY")) {
@@ -117,8 +103,6 @@ static bool init_shader(struct shader* shader, const char* source, const char* n
 			}
 
 			count = 0;
-
-			line_count++;
 		}
 
 		count++;

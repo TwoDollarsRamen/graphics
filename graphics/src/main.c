@@ -28,7 +28,7 @@ void show_loading_screen(v2i screen_size) {
 
 	u32 indices[] = {
 		0, 1, 3,
-		1, 2, 3 
+		1, 2, 3
 	};
 
 	f32 verts[] = {
@@ -63,7 +63,7 @@ void show_loading_screen(v2i screen_size) {
 
 	bind_vb_for_draw(&vb);
 	draw_vb(&vb);
-	
+
 	deinit_texture(&image);
 	free_shader(shader);
 	deinit_vb(&vb);
@@ -149,7 +149,7 @@ i32 main() {
 	load_obj("res/torus.obj", &model);
 	struct model* torus = new_model_from_obj(&model);
 	deinit_obj(&model);
-	
+
 	load_obj("res/simplescene.obj", &model);
 	struct model* scene = new_model_from_obj(&model);
 	deinit_obj(&model);
@@ -166,10 +166,10 @@ i32 main() {
 	vector_push(renderer->postprocessors, bloom_shader);
 	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
-	//vector_push(renderer->postprocessors, toon_shader);
-	//vector_push(renderer->postprocessors, outline_shader);
+	/* vector_push(renderer->postprocessors, toon_shader); */
+	vector_push(renderer->postprocessors, outline_shader);
 	vector_push(renderer->postprocessors, antialias_shader);
-	//vector_push(renderer->postprocessors, crt_shader);
+	/* vector_push(renderer->postprocessors, crt_shader); */
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { monkey, m4f_translate(m4f_identity(), make_v3f(3.0f, 1.5f, 1.0f)) }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { scene, m4f_identity() }));

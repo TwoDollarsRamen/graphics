@@ -27,7 +27,14 @@ struct shader {
 
 struct shader* new_shader(const char* source, const char* name);
 struct shader* new_shader_from_file(const char* filename);
+
+/* Uses the modification time from the OS to figure out
+ * if the shader is out of date. If it is, it is recompiled.
+ *
+ * Should there be an error, the original shader is used
+ * and the new version is discarded. */
 void shader_reload(struct shader* shader);
+
 void free_shader(struct shader* shader);
 void bind_shader(const struct shader* shader);
 void shader_set_f(const struct shader* shader, const char* name, const f32 v);
