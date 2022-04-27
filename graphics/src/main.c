@@ -178,7 +178,7 @@ i32 main() {
 	/* vector_push(renderer->postprocessors, ca_shader); */
 	vector_push(renderer->postprocessors, tonemap_shader);
 	/* vector_push(renderer->postprocessors, toon_shader); */
-	vector_push(renderer->postprocessors, outline_shader);
+	/* vector_push(renderer->postprocessors, outline_shader); */
 	vector_push(renderer->postprocessors, antialias_shader);
 	/* vector_push(renderer->postprocessors, crt_shader); */
 

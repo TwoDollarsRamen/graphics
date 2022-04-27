@@ -109,7 +109,7 @@ void renderer2d_flush(struct renderer2d* self) {
 }
 
 void renderer2d_set_texture(struct renderer2d* self, struct texture* texture) {
-	if ((texture && self->texture && self->texture->id != texture->id) || !self->texture) {
+	if (texture != self->texture) {
 		renderer2d_flush(self);
 	}
 	self->texture = texture;
