@@ -53,6 +53,14 @@ project "graphics"
 		runtime "debug"
 		symbols "on"
 
+		defines {
+			"DEBUG"
+		}
+
 	filter "configurations:release"
 		runtime "release"
 		optimize "on"
+
+		defines {
+			"RELEASE"
+		}

@@ -1,4 +1,6 @@
 The compiled executable will be placed in the `bin' directory.
+A pre-built release executable is placed in the `bin/release'
+directory.
 
 The `res' directory must be in the program's working directory
 for the program to work properly. It contains all of the textures,

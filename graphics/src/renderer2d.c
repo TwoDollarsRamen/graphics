@@ -24,6 +24,7 @@ struct renderer2d* new_renderer2d(struct shader* shader) {
 		sizeof(struct vertex2d) * renderer2d_batch_size * renderer2d_indices_per_quad);
 	configure_vb(&self->vb, 0, 2, sizeof(struct vertex2d), offsetof(struct vertex2d, position));
 	configure_vb(&self->vb, 1, 2, sizeof(struct vertex2d), offsetof(struct vertex2d, uv));
+	configure_vb(&self->vb, 2, 3, sizeof(struct vertex2d), offsetof(struct vertex2d, color));
 	bind_vb_for_edit(null);
 
 	return self;
@@ -38,10 +39,13 @@ void renderer2d_push(struct renderer2d* self, struct quad* quad) {
 	m4f transform = m4f_translate(m4f_identity(), (v3f) { quad->position.x, quad->position.y, 0.0f });
 	transform = m4f_scale(transform, (v3f) { quad->dimentions.x, quad->dimentions.y, 0.0f });
 
-	const f32 tx = quad->rect.x / self->texture->width;
-	const f32 ty = quad->rect.y / self->texture->height;
-	const f32 tw = quad->rect.w / self->texture->width;
-	const f32 th = quad->rect.h / self->texture->height;
+	f32 tx = 0.0f, ty = 0.0f, tw = 0.0f, th = 0.0f;
+	if (self->texture) {
+		tx = quad->rect.x / self->texture->width;
+		ty = quad->rect.y / self->texture->height;
+		tw = quad->rect.w / self->texture->width;
+		th = quad->rect.h / self->texture->height;
+	}
 
 	/* Vertices are transformed on the CPU instead of the shader, to avoid
 	 * having a transform matrix in an array on the shader or as a vertex
@@ -52,10 +56,10 @@ void renderer2d_push(struct renderer2d* self, struct quad* quad) {
 	const v4f p3 = m4f_transform(transform, make_v4f(0.0f, 1.0f, 0.0f, 1.0f));
 
 	struct vertex2d verts[] = {
-		{ { p0.x, p0.y }, { tx,      ty }       },
-		{ { p1.x, p1.y }, { tx + tw, ty }      },
-		{ { p2.x, p2.y }, { tx + tw, ty + th } },
-		{ { p3.x, p3.y }, { tx,      ty + th } },
+		{ { p0.x, p0.y }, { tx,      ty }     , quad->color },
+		{ { p1.x, p1.y }, { tx + tw, ty }     , quad->color },
+		{ { p2.x, p2.y }, { tx + tw, ty + th }, quad->color },
+		{ { p3.x, p3.y }, { tx,      ty + th }, quad->color },
 	};
 
 	const u32 idx_off = self->quad_count * renderer2d_verts_per_quad;
@@ -82,8 +86,14 @@ void renderer2d_flush(struct renderer2d* self) {
 
 	bind_shader(self->shader);
 	shader_set_m4f(self->shader, "projection", self->projection);
-	bind_texture(self->texture, 0);
-	shader_set_i(self->shader, "image", 0);
+
+	if (self->texture) {
+		bind_texture(self->texture, 0);
+		shader_set_i(self->shader, "image", 0);
+		shader_set_b(self->shader, "use_image", true);
+	} else {
+		shader_set_b(self->shader, "use_image", false);
+	}
 
 	/* Send the vertices to the GPU and draw them. */
 	bind_vb_for_edit(&self->vb);
@@ -99,10 +109,10 @@ void renderer2d_flush(struct renderer2d* self) {
 }
 
 void renderer2d_set_texture(struct renderer2d* self, struct texture* texture) {
-	if ((self->texture && self->texture->id != texture->id) || !self->texture) {
+	if ((texture && self->texture && self->texture->id != texture->id) || !self->texture) {
 		renderer2d_flush(self);
-		self->texture = texture;
 	}
+	self->texture = texture;
 }
 
 struct glyph_set {
@@ -249,17 +259,13 @@ void free_font(struct font* font) {
 	free(font);
 }
 
-void render_text(struct renderer2d* renderer, struct font* font, const char* text, v2f position) {
+void render_text(struct renderer2d* renderer, struct font* font, const char* text, v2f position, v3f color) {
 	f32 x = position.x;
 	f32 y = position.y;
 
-	const char* p;
-	u32 codepoint;
-	struct glyph_set* set;
-	stbtt_bakedchar* g;
 	f32 ori_x = x;
 
-	p = text;
+	const char* p = text;
 	while (*p) {
 		if (*p == '\n') {
 			x = ori_x;
@@ -269,10 +275,11 @@ void render_text(struct renderer2d* renderer, struct font* font, const char* tex
 			continue;
 		}
 
+		u32 codepoint;
 		p = utf8_to_codepoint(p, &codepoint);
 
-		set = get_glyph_set(font, codepoint);
-		g = &set->glyphs[codepoint & 0xff];
+		struct glyph_set* set = get_glyph_set(font, codepoint);
+		stbtt_bakedchar* g = &set->glyphs[codepoint & 0xff];
 
 		f32 w = (f32)(g->x1 - g->x0);
 		f32 h = (f32)(g->y1 - g->y0);
@@ -283,13 +290,40 @@ void render_text(struct renderer2d* renderer, struct font* font, const char* tex
 			.position = { x + g->xoff, y + g->yoff },
 			.dimentions = { w, h },
 			.rect = { g->x0, g->y0, w, h },
+			.color = color
 		};
 
 		renderer2d_push(renderer, &quad);
 		x += g->xadvance;
 	}
+}
 
-	renderer2d_flush(renderer);
+v2f calc_dimentions(struct font* font, const char* text) {
+	f32 x = 0.0f;
+
+	v2f r = { 0.0f, (f32)font->height };
+
+	const char* p = text;
+	while (*p) {
+		if (*p == '\n') {
+			r.y += font->height;
+			x = 0.0f;
+			p++;
+			continue;
+		}
+
+		u32 codepoint;
+		p = utf8_to_codepoint(p, &codepoint);
+
+		struct glyph_set* set = get_glyph_set(font, codepoint);
+		stbtt_bakedchar* g = &set->glyphs[codepoint & 0xff];
+
+		x += g->xadvance;
+
+		if (x > r.x) { r.x = x; }
+	}
+
+	return r;
 }
 
 i32 font_height(struct font* font) {

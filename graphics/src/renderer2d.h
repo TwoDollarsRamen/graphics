@@ -11,6 +11,7 @@
 struct vertex2d {
 	v2f position;
 	v2f uv;
+	v3f color;
 };
 
 struct renderer2d {
@@ -34,6 +35,7 @@ struct rect {
 struct quad {
 	v2f position;
 	v2f dimentions;
+	v3f color;
 	struct rect rect;
 };
 
@@ -47,5 +49,6 @@ void free_renderer2d(struct renderer2d* self);
 void renderer2d_push(struct renderer2d* self, struct quad* quad);
 void renderer2d_flush(struct renderer2d* self);
 void renderer2d_set_texture(struct renderer2d* self, struct texture* texture);
-void render_text(struct renderer2d* renderer, struct font* font, const char* text, v2f position);
+void render_text(struct renderer2d* renderer, struct font* font, const char* text, v2f position, v3f color);
 i32 font_height(struct font* font);
+v2f calc_dimentions(struct font* font, const char* text);

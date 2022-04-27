@@ -53,6 +53,7 @@ enum {
 		u8 state; \
 	}
 
+/* Internal table functions, to be called upon by the table macros. */
 void* _find_table_el(void* els, usize el_size, usize capacity, usize key_size, void* key,
 	usize key_off, usize val_off, usize state_off, usize* ind);
 void* _table_get(void* els, usize el_size, usize capacity, usize count, usize key_size, void* key,
@@ -90,6 +91,10 @@ void* _table_next_key(void* els, usize el_size, usize capacity, usize count, usi
 	struct { \
 		_table_el(kt_, vt_)* entries; \
 		usize count, capacity; \
+		\
+		/* Temporary element, key and value for assigning to
+		 * take a pointer to to allow literals to be passed
+		 * into the macros. */\
 		_table_el(kt_, vt_) e; \
 		kt_ k; \
 		vt_ v; \

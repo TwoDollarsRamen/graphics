@@ -13,8 +13,10 @@
 #include "table.h"
 #include "vector.h"
 #include "video.h"
+#include "ui.h"
 
 vector(char) log_buffer;
+bool mouse_button_released;
 
 void show_loading_screen(v2i screen_size) {
 	struct texture image;
@@ -71,6 +73,11 @@ void show_loading_screen(v2i screen_size) {
 	glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 }
 
+static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		mouse_button_released = true;
+	}
+}
 
 i32 main() {
 	glfwInit();
@@ -102,6 +109,7 @@ i32 main() {
 
 	glfwSetWindowUserPointer(window, &camera);
 	glfwSetCursorPosCallback(window, camera_look);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	struct shader* invert_shader = { 0 };
@@ -157,6 +165,9 @@ i32 main() {
 	struct renderer* renderer = new_renderer(shaders);
 	renderer->ambient_intensity = 0.5f;
 	struct renderer2d* renderer2d = new_renderer2d(sprite_shader);
+	struct font* consolas = new_font_from_file("res/consolas.ttf", 14.0f);
+
+	struct ui* ui = new_ui_ctx(renderer2d, consolas);
 
 	vector_push(renderer->postprocessors, bright_extract_shader);
 	vector_push(renderer->postprocessors, blur_h_shader);
@@ -214,8 +225,6 @@ i32 main() {
 		}
 	}));
 
-	struct font* consolas = new_font_from_file("res/consolas.ttf", 14.0f);
-
 	char fps_buffer[128] = { '\0' };
 	f64 tunfps = 0.0;
 
@@ -224,8 +233,10 @@ i32 main() {
 	bool holding_mouse = true;
 
 	while (!glfwWindowShouldClose(window)) {
+		mouse_button_released = false;
 		glfwPollEvents();
 
+#ifdef DEBUG
 		shader_reload(shaders.lit);
 		shader_reload(shaders.shadowmap);
 		shader_reload(shaders.pick);
@@ -244,19 +255,14 @@ i32 main() {
 		shader_reload(bloom_shader);
 		shader_reload(outline_shader);
 		shader_reload(sprite_shader);
-
-		if (glfwGetKey(window, GLFW_KEY_C) && vector_count(log_buffer)) {
-			/* Clear the log. */
-			log_buffer[0] = '\0';
-			vector_clear(log_buffer);
-		}
+#endif
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {	
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			holding_mouse = false;
 		}
 
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)) {
+		if (!ui_anything_hovered(ui) && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)) {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			holding_mouse = true;
 			camera.first_mouse = true;
@@ -325,10 +331,21 @@ i32 main() {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		render_text(renderer2d, consolas, fps_buffer, make_v2f(0.0f, 0.0f));
-		if (log_buffer) {
-			render_text(renderer2d, consolas, log_buffer, make_v2f(0.0f, (f32)font_height(consolas)));
+		f64 mx, my;
+		glfwGetCursorPos(window, &mx, &my);
+		ui_begin_frame(ui, make_v2f((f32)mx, (f32)my), mouse_button_released && !holding_mouse);
+
+		ui_text_ex(ui, fps_buffer, make_v3f(0.1f, 0.9f, 0.1f));
+		if (vector_count(log_buffer) > 0) {
+			ui_text_ex(ui, log_buffer, make_v3f(0.9f, 0.1f, 0.1f));
+
+			if (ui_button(ui, "Clear log")) {
+				log_buffer[0] = '\0';
+				vector_clear(log_buffer);
+			}
 		}
+
+		ui_end_frame(ui);
 
 		enable_depth_test();
 		glDisable(GL_BLEND);
@@ -347,6 +364,8 @@ i32 main() {
 	}
 
 	free_font(consolas);
+
+	free_ui_ctx(ui);
 
 	free_renderer(renderer);
 	free_renderer2d(renderer2d);
