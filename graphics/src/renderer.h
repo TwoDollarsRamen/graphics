@@ -6,6 +6,7 @@
 #include "maths.h"
 #include "mesh.h"
 #include "vector.h"
+#include "renderer2d.h"
 
 struct camera;
 

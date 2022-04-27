@@ -155,7 +155,7 @@ vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_di
 	float shadow = 0.0;
 
 	if (use_shadows) {
-		float bias = 0.005;
+		float bias = 0.0;
 
 		vec3 proj_coords = fs_in.light_pos.xyz / fs_in.light_pos.w;
 		proj_coords = proj_coords * 0.5 + 0.5;

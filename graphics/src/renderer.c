@@ -266,6 +266,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		if (light->type == light_directional && light->as.directional.cast_shadows) {
 			light_matrix = get_light_matrix(light, scene_aabb);
 
+			glCullFace(GL_FRONT);
+
 			clear_depth_map(&renderer->shadowmap);
 
 			struct shader* s = renderer->shaders.shadowmap;
@@ -282,6 +284,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 			}
 
 			unbind_depth_map(&renderer->shadowmap);
+
+			glCullFace(GL_BACK);
 
 			shadowmap_exists = true;
 			break;

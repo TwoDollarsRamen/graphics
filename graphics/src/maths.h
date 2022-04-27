@@ -368,6 +368,17 @@ force_inline m4f m4f_identity() {
 	return make_m4f(1.0f);
 }
 
+force_inline m4f m4f_screenspace(f32 hw, f32 hh) {
+	m4f r = m4f_identity();
+
+    r.m[0][0] =  hw;
+    r.m[0][3] =  hw;
+    r.m[1][1] = -hh;
+    r.m[1][3] =  hh;
+
+    return r;
+}
+
 force_inline m4f m4f_mul(m4f a, m4f b) {
 	m4f r = m4f_identity();
 
