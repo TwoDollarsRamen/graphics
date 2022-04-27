@@ -168,7 +168,7 @@ struct model* new_model_from_obj(struct obj_model* omodel) {
 	};
 
 	/* Initiate preprocessing. */
-	if (omodel->has_root_mesh) {	
+	if (omodel->has_root_mesh) {
 		struct mesh mesh = { 0 };
 		vector_push(model->meshes, mesh);
 

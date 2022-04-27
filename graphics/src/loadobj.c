@@ -306,6 +306,10 @@ bool load_obj(const char* filename, struct obj_model* model) {
 }
 
 void deinit_obj(struct obj_model* model) {
+	if (model->has_root_mesh) {
+		free_vector(model->root_mesh.vertices);
+	}
+
 	for (u32 i = 0; i < vector_count(model->meshes); i++) {
 		struct obj_mesh* mesh = model->meshes + i;
 

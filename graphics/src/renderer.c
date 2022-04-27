@@ -78,6 +78,11 @@ void free_renderer(struct renderer* renderer) {
 	deinit_render_target(renderer->fb0);
 	deinit_render_target(renderer->fb1);
 
+	free_vector(renderer->drawlist);
+	free_vector(renderer->lights);
+	free_vector(renderer->ao_kernel);
+	free_vector(renderer->postprocessors);
+
 	free(renderer->fb0);
 	free(renderer->fb1);
 	free(renderer->scene_fb);
