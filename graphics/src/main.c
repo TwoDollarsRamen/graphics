@@ -18,6 +18,21 @@
 vector(char) log_buffer;
 bool mouse_button_released;
 
+struct shader* invert_shader = { 0 };
+struct shader* toon_shader = { 0 };
+struct shader* crt_shader = { 0 };
+struct shader* tonemap_shader = { 0 };
+struct shader* antialias_shader = { 0 };
+struct shader* blur_h_shader = { 0 };
+struct shader* blur_v_shader = { 0 };
+struct shader* ca_shader = { 0 };
+struct shader* bright_extract_shader = { 0 };
+struct shader* bloom_shader = { 0 };
+struct shader* outline_shader = { 0 };
+struct shader* sprite_shader = { 0 };
+
+struct shader_config shaders = { 0 };
+
 void show_loading_screen(v2i screen_size) {
 	struct texture image;
 	glClearColor(0.0705882352941f, 0.0823529411765f, 0.262745098039f, 1.0f);
@@ -79,6 +94,21 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 	}
 }
 
+static void setup_post_processors(struct renderer* renderer) {
+	vector_push(renderer->postprocessors, bright_extract_shader);
+	vector_push(renderer->postprocessors, blur_h_shader);
+	vector_push(renderer->postprocessors, blur_v_shader);
+	vector_push(renderer->postprocessors, blur_h_shader);
+	vector_push(renderer->postprocessors, blur_v_shader);
+	vector_push(renderer->postprocessors, bloom_shader);
+	/* vector_push(renderer->postprocessors, ca_shader); */
+	vector_push(renderer->postprocessors, tonemap_shader);
+	/* vector_push(renderer->postprocessors, toon_shader); */
+	/* vector_push(renderer->postprocessors, outline_shader); */
+	vector_push(renderer->postprocessors, antialias_shader);
+	/* vector_push(renderer->postprocessors, crt_shader); */
+}
+
 i32 main() {
 	glfwInit();
 
@@ -112,20 +142,7 @@ i32 main() {
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	struct shader* invert_shader = { 0 };
-	struct shader* toon_shader = { 0 };
-	struct shader* crt_shader = { 0 };
-	struct shader* tonemap_shader = { 0 };
-	struct shader* antialias_shader = { 0 };
-	struct shader* blur_h_shader = { 0 };
-	struct shader* blur_v_shader = { 0 };
-	struct shader* ca_shader = { 0 };
-	struct shader* bright_extract_shader = { 0 };
-	struct shader* bloom_shader = { 0 };
-	struct shader* outline_shader = { 0 };
-	struct shader* sprite_shader = { 0 };
-
-	struct shader_config shaders = { 0 };
+	
 	shaders.lit           = new_shader_from_file("res/shaders/lit.glsl");
 	shaders.shadowmap     = new_shader_from_file("res/shaders/shadowmap.glsl");
 	shaders.pick          = new_shader_from_file("res/shaders/pick.glsl");
@@ -170,18 +187,7 @@ i32 main() {
 
 	struct ui* ui = new_ui_ctx(renderer2d, consolas);
 
-	vector_push(renderer->postprocessors, bright_extract_shader);
-	vector_push(renderer->postprocessors, blur_h_shader);
-	vector_push(renderer->postprocessors, blur_v_shader);
-	vector_push(renderer->postprocessors, blur_h_shader);
-	vector_push(renderer->postprocessors, blur_v_shader);
-	vector_push(renderer->postprocessors, bloom_shader);
-	/* vector_push(renderer->postprocessors, ca_shader); */
-	vector_push(renderer->postprocessors, tonemap_shader);
-	/* vector_push(renderer->postprocessors, toon_shader); */
-	/* vector_push(renderer->postprocessors, outline_shader); */
-	vector_push(renderer->postprocessors, antialias_shader);
-	/* vector_push(renderer->postprocessors, crt_shader); */
+	setup_post_processors(renderer);
 
 	vector_push(renderer->drawlist, ((struct drawlist_item) { scene, m4f_identity() }));
 	vector_push(renderer->drawlist, ((struct drawlist_item) { soulspear, m4f_translate(m4f_identity(), make_v3f(0.0f, 1.0f, 3.0f)) }));
@@ -225,6 +231,8 @@ i32 main() {
 				.cast_shadows = true
 		}
 	}));
+
+	bool postprocess_enable = true;
 
 	char fps_buffer[128] = { '\0' };
 	f64 tunfps = 0.0;
@@ -348,6 +356,18 @@ i32 main() {
 		} else {
 			if (ui_button(ui, "Show Debug")) {
 				renderer->debug = true;
+			}
+		}
+
+		if (postprocess_enable) {
+			if (ui_button(ui, "Disable Post-Processing")) {
+				postprocess_enable = false;
+				vector_clear(renderer->postprocessors);
+			}
+		} else {
+			if (ui_button(ui, "Enable Post-Processing")) {
+				postprocess_enable = true;
+				setup_post_processors(renderer);
 			}
 		}
 
