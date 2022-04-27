@@ -49,6 +49,7 @@ struct shader_config {
 	struct shader* g;
 	struct shader* ao;
 	struct shader* ao_blur;
+	struct shader* line;
 };
 
 struct drawlist_item {
@@ -78,6 +79,8 @@ struct renderer {
 
 	struct depth_map shadowmap;
 
+	struct line_renderer* line_renderer;
+
 	struct shader_config shaders;
 
 	v3f ambient;
@@ -100,6 +103,7 @@ struct renderer {
 struct renderer* new_renderer(struct shader_config config);
 void free_renderer(struct renderer* renderer);
 void renderer_draw(struct renderer* renderer, struct camera* camera);
+void renderer_draw_debug(struct renderer* renderer, struct camera* camera);
 void renderer_mouse_pick(struct renderer* renderer, struct camera* camera, v2i mouse_pos);
 
 struct camera {

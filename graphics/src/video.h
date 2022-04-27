@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "maths.h"
+#include "vector.h"
 
 #define max_lights 100
 
@@ -126,3 +127,17 @@ void bind_depth_map_output(struct depth_map* dm, u32 unit);
 struct color {
 	u8 r, g, b, a;
 };
+
+struct line_renderer {
+	struct shader* shader;
+
+	u32 va, vb;
+	usize vb_count;
+
+	vector(v3f) points;
+};
+
+struct line_renderer* new_line_renderer(struct shader* shader);
+void free_line_renderer(struct line_renderer* renderer);
+void update_line_renderer(struct line_renderer* renderer, m4f projection, m4f view);
+void draw_line(struct line_renderer* renderer, v3f start, v3f end, v3f color);

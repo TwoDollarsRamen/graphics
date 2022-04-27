@@ -368,7 +368,7 @@ void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count
 	u64 stride, u64 offset) {
 
 	glVertexAttribPointer(index, component_count, GL_FLOAT, GL_FALSE,
-		(GLsizei)stride, (void*)(u64)(offset));
+		(GLsizei)stride, (void*)(offset));
 	glEnableVertexAttribArray(index);
 }
 
@@ -654,4 +654,55 @@ void bind_depth_map_output(struct depth_map* dm, u32 unit) {
 
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, dm->output);
+}
+
+struct line_renderer* new_line_renderer(struct shader* shader) {
+	struct line_renderer* renderer = calloc(1, sizeof(struct line_renderer));
+
+	renderer->shader = shader;
+
+	glGenVertexArrays(1, &renderer->va);
+	glBindVertexArray(renderer->va);
+
+	glGenBuffers(1, &renderer->vb);
+	glBindBuffer(GL_ARRAY_BUFFER, renderer->vb);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(v3f) * 2, (void*)(usize)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(v3f) * 2, (void*)sizeof(v3f));
+	glEnableVertexAttribArray(1);
+
+	return renderer;
+}
+
+void free_line_renderer(struct line_renderer* renderer) {
+	free_vector(renderer->points);
+
+	glDeleteVertexArrays(1, &renderer->va);
+	glDeleteBuffers(1, &renderer->vb);
+
+	free(renderer);
+}
+
+void update_line_renderer(struct line_renderer* renderer, m4f projection, m4f view) {
+	bind_shader(renderer->shader);
+
+	shader_set_m4f(renderer->shader, "projection", projection);
+	shader_set_m4f(renderer->shader, "view", view);
+
+	glBindVertexArray(renderer->va);
+	glBindBuffer(GL_ARRAY_BUFFER, renderer->vb);
+
+	glBufferData(GL_ARRAY_BUFFER, vector_count(renderer->points) * sizeof(v3f), renderer->points, GL_DYNAMIC_DRAW);
+
+	glDrawArrays(GL_LINES, 0, (i32)vector_count(renderer->points));
+
+	vector_clear(renderer->points);
+}
+
+void draw_line(struct line_renderer* renderer, v3f start, v3f end, v3f color) {
+	vector_push(renderer->points, start);
+	vector_push(renderer->points, color);
+	vector_push(renderer->points, end);
+	vector_push(renderer->points, color);
 }

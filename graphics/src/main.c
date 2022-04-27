@@ -132,6 +132,7 @@ i32 main() {
 	shaders.g             = new_shader_from_file("res/shaders/geometry.glsl");
 	shaders.ao            = new_shader_from_file("res/shaders/ao.glsl");
 	shaders.ao_blur       = new_shader_from_file("res/shaders/ao_blur.glsl");
+	shaders.line          = new_shader_from_file("res/shaders/line.glsl");
 	invert_shader         = new_shader_from_file("res/shaders/invert.glsl");
 	toon_shader           = new_shader_from_file("res/shaders/toon.glsl");
 	crt_shader            = new_shader_from_file("res/shaders/crt.glsl");
@@ -243,6 +244,7 @@ i32 main() {
 		shader_reload(shaders.g);
 		shader_reload(shaders.ao);
 		shader_reload(shaders.ao_blur);
+		shader_reload(shaders.line);
 		shader_reload(invert_shader);
 		shader_reload(toon_shader);
 		shader_reload(crt_shader);
@@ -331,6 +333,8 @@ i32 main() {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+		renderer_draw_debug(renderer, &camera);
+
 		f64 mx, my;
 		glfwGetCursorPos(window, &mx, &my);
 		ui_begin_frame(ui, make_v2f((f32)mx, (f32)my), mouse_button_released && !holding_mouse);
@@ -381,6 +385,7 @@ i32 main() {
 	free_shader(shaders.g);
 	free_shader(shaders.ao);
 	free_shader(shaders.ao_blur);
+	free_shader(shaders.line);
 	free_shader(invert_shader);
 	free_shader(toon_shader);
 	free_shader(crt_shader);

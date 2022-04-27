@@ -15,6 +15,8 @@ struct renderer* new_renderer(struct shader_config config) {
 	renderer->ambient = make_v3f(1.0, 1.0, 1.0);
 	renderer->ambient_intensity = 0.1f;
 
+	renderer->line_renderer = new_line_renderer(config.line);
+
 	init_noise_texture(&renderer->ao_noise, 4, 4);
 
 	for (u32 i = 0; i < 64; i++) {
@@ -150,6 +152,14 @@ static m4f get_light_matrix(struct light* light, struct aabb scene) {
 		scene.min.z, scene.max.z);
 	
 	return m4f_mul(proj, view);
+}
+
+void renderer_draw_debug(struct renderer* renderer, struct camera* camera) {
+	m4f camera_proj = get_camera_proj(camera, make_v2i(screen_w, screen_h));
+	m4f camera_view = get_camera_view(camera);
+
+	draw_line(renderer->line_renderer, make_v3f(0.0f, 0.0f, 0.0f), make_v3f(1.0f, 1.0f, 1.0f), make_v3f(1.0f, 1.0f, 1.0f));
+	update_line_renderer(renderer->line_renderer, camera_proj, camera_view);
 }
 
 void renderer_draw(struct renderer* renderer, struct camera* camera) {
