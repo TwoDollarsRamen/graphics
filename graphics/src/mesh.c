@@ -12,15 +12,10 @@ struct vertex {
 #pragma pack(pop)
 
 static bool vertex_equal(v3f pos, v3f norm, v2f uv, struct vertex vert) {
-	return (
-		pos.x  == vert.position.x &&
-		pos.y  == vert.position.y &&
-		pos.z  == vert.position.z &&
-		uv.x   == vert.uv.x &&
-		uv.y   == vert.uv.y &&
-		norm.x == vert.normal.x &&
-		norm.y == vert.normal.y &&
-		norm.z == vert.normal.z);
+	return 
+		v3f_eq(pos,  vert.position) &&
+		v3f_eq(norm, vert.normal)   &&
+		v2f_eq(uv,   vert.uv);
 }
 
 static void process_mesh(struct model* model, struct mesh* mesh, struct obj_model* omodel, struct obj_mesh* omesh) {
@@ -44,12 +39,12 @@ static void process_mesh(struct model* model, struct mesh* mesh, struct obj_mode
 		v3f norm = omodel->normals[omesh->vertices[i].normal];
 		v2f uv = omodel->uvs[omesh->vertices[i].uv];
 
-		if (pos.x < model->aabb.min.x) { model->aabb.min.x = pos.x; }
-		if (pos.y < model->aabb.min.y) { model->aabb.min.y = pos.y; }
-		if (pos.z < model->aabb.min.z) { model->aabb.min.z = pos.z; }
-		if (pos.x > model->aabb.max.x) { model->aabb.max.x = pos.x; }
-		if (pos.y > model->aabb.max.y) { model->aabb.max.y = pos.y; }
-		if (pos.z > model->aabb.max.z) { model->aabb.max.z = pos.z; }
+		model->aabb.min.x = minimum(pos.x, model->aabb.min.x);
+		model->aabb.min.y = minimum(pos.y, model->aabb.min.y);
+		model->aabb.min.z = minimum(pos.z, model->aabb.min.z);
+		model->aabb.max.x = maximum(pos.x, model->aabb.max.x);
+		model->aabb.max.y = maximum(pos.y, model->aabb.max.y);
+		model->aabb.max.z = maximum(pos.z, model->aabb.max.z);
 
 		for (u32 ii = 0; ii < vertex_count; ii++) {
 			if (vertex_equal(pos, norm, uv, verts[ii])) {

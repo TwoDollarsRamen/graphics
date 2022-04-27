@@ -163,7 +163,7 @@ i32 main() {
 	struct model* scene = new_model_from_obj(&model);
 	deinit_obj(&model);
 
-	struct renderer* renderer = new_renderer(shaders);
+	struct renderer* renderer = new_renderer(shaders, false);
 	renderer->ambient_intensity = 0.5f;
 	struct renderer2d* renderer2d = new_renderer2d(sprite_shader);
 	struct font* consolas = new_font_from_file("res/consolas.ttf", 14.0f);
@@ -340,6 +340,17 @@ i32 main() {
 		ui_begin_frame(ui, make_v2f((f32)mx, (f32)my), mouse_button_released && !holding_mouse);
 
 		ui_text_ex(ui, fps_buffer, make_v3f(0.1f, 0.9f, 0.1f));
+
+		if (renderer->debug) {
+			if (ui_button(ui, "Hide Debug")) {
+				renderer->debug = false;
+			}
+		} else {
+			if (ui_button(ui, "Show Debug")) {
+				renderer->debug = true;
+			}
+		}
+
 		if (vector_count(log_buffer) > 0) {
 			ui_text_ex(ui, log_buffer, make_v3f(0.9f, 0.1f, 0.1f));
 

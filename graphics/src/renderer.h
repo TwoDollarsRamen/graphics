@@ -88,6 +88,11 @@ struct renderer {
 
 	u32 selected;
 
+	bool debug;
+
+	struct aabb scene_aabb;
+	vector(struct aabb) aabbs;
+
 	struct texture ao_noise;
 	vector(v3f) ao_kernel;
 
@@ -100,7 +105,7 @@ struct renderer {
 	vector(struct shader*) postprocessors;
 };
 
-struct renderer* new_renderer(struct shader_config config);
+struct renderer* new_renderer(struct shader_config config, bool debug);
 void free_renderer(struct renderer* renderer);
 void renderer_draw(struct renderer* renderer, struct camera* camera);
 void renderer_draw_debug(struct renderer* renderer, struct camera* camera);

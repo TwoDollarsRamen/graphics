@@ -5,8 +5,10 @@
 
 #include "renderer.h"
 
-struct renderer* new_renderer(struct shader_config config) {
+struct renderer* new_renderer(struct shader_config config, bool debug) {
 	struct renderer* renderer = calloc(1, sizeof(struct renderer));
+
+	renderer->debug = debug;
 
 	renderer->selected = 0;
 
@@ -73,6 +75,9 @@ struct renderer* new_renderer(struct shader_config config) {
 }
 
 void free_renderer(struct renderer* renderer) {
+	free_line_renderer(renderer->line_renderer);
+	free_vector(renderer->aabbs);
+
 	deinit_texture(&renderer->ao_noise);
 
 	deinit_render_target(renderer->scene_fb);
@@ -112,7 +117,7 @@ static struct aabb transform_aabb(struct aabb aabb, m4f matrix) {
 	};
 
 	for (u32 i = 0; i < 8; i++) {
-		v4f point = m4f_transform(matrix, make_v4f(corners[i].x, corners[i].y, corners[i].z, 1.0f));
+		v4f point = m4f_transform(matrix, make_v4f(corners[i].x, corners[i].y, corners[i].z, 0.0f));
 
 		result.min.x = minimum(result.min.x, point.x);
 		result.min.y = minimum(result.min.y, point.y);
@@ -154,11 +159,69 @@ static m4f get_light_matrix(struct light* light, struct aabb scene) {
 	return m4f_mul(proj, view);
 }
 
+
+static void draw_aabb(struct renderer* renderer, struct aabb aabb, v3f color) {
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.min.x, aabb.min.y, aabb.min.z),
+			make_v3f(aabb.min.x, aabb.max.y, aabb.min.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.max.x, aabb.min.y, aabb.min.z),
+			make_v3f(aabb.max.x, aabb.max.y, aabb.min.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.min.x, aabb.min.y, aabb.max.z),
+			make_v3f(aabb.min.x, aabb.max.y, aabb.max.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.max.x, aabb.min.y, aabb.max.z),
+			make_v3f(aabb.max.x, aabb.max.y, aabb.max.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.max.x, aabb.min.y, aabb.min.z),
+			make_v3f(aabb.min.x, aabb.min.y, aabb.min.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.min.x, aabb.min.y, aabb.max.z),
+			make_v3f(aabb.min.x, aabb.min.y, aabb.min.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.min.x, aabb.max.y, aabb.max.z),
+			make_v3f(aabb.max.x, aabb.max.y, aabb.max.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.max.x, aabb.max.y, aabb.min.z),
+			make_v3f(aabb.max.x, aabb.max.y, aabb.max.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.min.x, aabb.min.y, aabb.max.z),
+			make_v3f(aabb.max.x, aabb.min.y, aabb.max.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.max.x, aabb.min.y, aabb.min.z),
+			make_v3f(aabb.max.x, aabb.min.y, aabb.max.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.min.x, aabb.max.y, aabb.min.z),
+			make_v3f(aabb.min.x, aabb.max.y, aabb.max.z), color);
+
+	draw_line(renderer->line_renderer,
+			make_v3f(aabb.min.x, aabb.max.y, aabb.min.z),
+			make_v3f(aabb.max.x, aabb.max.y, aabb.min.z), color);
+}
+
 void renderer_draw_debug(struct renderer* renderer, struct camera* camera) {
+	if (!renderer->debug) { return; }
+
 	m4f camera_proj = get_camera_proj(camera, make_v2i(screen_w, screen_h));
 	m4f camera_view = get_camera_view(camera);
 
-	draw_line(renderer->line_renderer, make_v3f(0.0f, 0.0f, 0.0f), make_v3f(1.0f, 1.0f, 1.0f), make_v3f(1.0f, 1.0f, 1.0f));
+	draw_aabb(renderer, renderer->scene_aabb, make_v3f(0.9f, 0.1f, 0.1f));
+
+	for (struct aabb* vector_iter(renderer->aabbs, aabb)) {
+		draw_aabb(renderer, *aabb, make_v3f(0.4f, 0.4f, 0.4f));
+	}
+
 	update_line_renderer(renderer->line_renderer, camera_proj, camera_view);
 }
 
@@ -175,11 +238,17 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		.max = { -INFINITY, -INFINITY, -INFINITY }
 	};
 
+	vector_clear(renderer->aabbs);
+
 	/* Generate an AABB of the scene so that the shadow map can get a tight fit. */
 	for (struct drawlist_item* vector_iter(renderer->drawlist, item)) {
 		struct model* model = item->model;
 
 		struct aabb model_aabb = transform_aabb(model->aabb, item->transform);
+
+		if (renderer->debug) {
+			vector_push(renderer->aabbs, model_aabb);
+		}
 
 		scene_aabb.min.x = minimum(scene_aabb.min.x, model_aabb.min.x);
 		scene_aabb.min.y = minimum(scene_aabb.min.y, model_aabb.min.y);
@@ -188,6 +257,8 @@ void renderer_draw(struct renderer* renderer, struct camera* camera) {
 		scene_aabb.max.y = maximum(scene_aabb.max.y, model_aabb.max.y);
 		scene_aabb.max.z = maximum(scene_aabb.max.z, model_aabb.max.z);
 	}
+
+	renderer->scene_aabb = scene_aabb;
 
 	/* Render the shadow-map. */
 	bool shadowmap_exists = false;
